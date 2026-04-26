@@ -1,0 +1,757 @@
+.playerPanel{
+	width: 350px;
+	height: 80px;
+	position:absolute;
+	left:490px;
+	top:10px;
+	overflow: hidden;
+	background: url(../images/playerPanel.png) no-repeat;
+	background-position: top;
+	z-index: 150;
+	/* -webkit-transition: .2s;
+	-moz-transition: .2s; */
+	cursor: pointer;
+}
+.playerPanel:hover{
+	height: 704px;
+}
+.playerPanel:hover .playerList{
+	top: 100px;
+}
+#playerList{
+	margin-top: 10px;
+	scale: 80%;
+	height: 720px;
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+.player{
+	text-align: left;
+	display: flex;
+	border: 1px solid grey;
+	padding: 5px;
+}
+.ps{
+	background-color: rgb(71, 2, 100);
+	border: 1px solid wheat;
+	filter: brightness(1.5);
+}
+.player:hover{
+	background-color: rgb(37, 1, 53);
+}
+
+.playerListpanel{
+	width: 450px;
+	height: 900px;
+	position:absolute;
+	left:500px;
+	top:26px;
+	background: url(../images/playerPanelHead.png) no-repeat;
+	background-size: 100% 100%;
+	background-position: center;
+	z-index: 180;
+}
+body{
+	background-image: url(../images/background.webp);
+	color:wheat;
+	text-align: center;
+	margin: 0px;
+}
+hr {
+	height: 4px;
+	border: none;
+	background-image: linear-gradient(to right, rgba(250, 192, 0, 0), rgba(4, 88, 3, 0.6), rgba(250, 192, 0, 0));
+}
+input[type=button]{
+    color: #efe5d3;
+    background-image: url(../images/button.png);
+	background-size: 100% 100%;
+	background-position: center;
+	background-repeat: no-repeat;
+	cursor: pointer;
+	border: rgb(96 79 25) solid 1px;
+	background-color: rgb(14, 13, 13);
+	height: 26px;
+}
+input[type=button]:hover{
+    filter: brightness(1.5);
+}
+input[type=text]{
+	background-color: rgb(14, 13, 13);
+	color: #efe5d3;
+}
+input[type=checkbox]{
+	transform: scale(1.3);
+}
+select{
+	width:400px;
+	height:36px;
+}
+.select2-results,.select2-search{
+	background-color:rgb(41 41 41);
+}
+.select2-container{
+	text-align: left;
+	color:rgb(4, 255, 0);
+	font-size:14px;
+}
+#mainPanel{
+	position: absolute;
+	left: 792px;
+	top: 40px;
+	width: 520px;
+	height: 805px;
+}
+.uiPanel{
+	display: inline-block;
+	background-image: url(../images/LEUI.jpg);
+	width: 1346px;
+	height: 868px;
+	color: white;
+	position: relative;
+}
+.filePanel{
+	position: absolute;
+	top:26px;
+	left:0px; 
+	width:800px;
+	height:50px;
+	display: flex;
+	color: wheat;
+	z-index: 50;
+}
+.fileButton{
+	display: inline-block;
+	width:150px;
+	height:50px;
+	cursor: pointer;
+	background-image: url(../images/button.png);
+	background-size: 100% 100%;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+.fileButton:hover{
+	filter: brightness(1.5);
+}
+.switchPanel{
+	position: absolute;
+	top:805px;
+	left:573px; 
+	width:195px;
+	height:50px;
+	display: flex;
+	color: wheat;
+}
+.skillSwitch{
+	width:100px;
+	height:50px;
+}
+.skillBoundsPanel,.skillList{
+	display: inline-block;
+    width: 650px;
+    height:100%;
+    color: wheat;
+	margin: 10px;
+}
+.rightEditorPanel{
+	position: absolute;
+    top: 90px;
+    left: 782px;
+    width: 538px;
+    height: 760px;
+    background-image: url(../images/itemlist-bg.webp);
+    color: wheat;
+    z-index: 40;
+    display: none;
+	border-radius: 10px;
+}
+.closeCross{
+	position: absolute;
+	top:0px;
+	right: 0px ;
+	cursor: pointer;
+	width: 30px;
+}
+.rightEditorSwitch{
+	position: absolute;
+    top: 60px;
+    left: 910px;
+    display: inline-block;
+    width: 90px;
+    height: 28px;
+	background-color: rgba(255, 0, 0, 0.259);
+    cursor: pointer;
+	border-radius: 4px;
+}
+.rightEditorSwitch:hover{
+	background-color: rgba(255, 0, 0, 0);
+}
+.noBlessImg{
+	width:41px;
+	height: 41px;
+	background-image:url(../images/rarity0.png);
+	background-size: 100% 100%;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+#playInfoPanel{
+	position: absolute;
+    top: 581px;
+    left: 90px;
+    width: 560px;
+    height: 220px;
+    background-image: url(../images/itemlist-bg.webp);
+    border: 2px solid rgb(4, 88, 3);
+	box-shadow: 2px 2px 4px rgb(4, 88, 3);
+    color: wheat;
+	z-index: 99;
+	display: none;
+}
+#codePanel{
+	position:absolute;
+	top: 200px;
+	left: 500px;
+	width: 270px;
+	z-index: 170;
+	display: none;
+	background-color: wheat;
+	padding: 10px;
+	color: black;
+}
+#SourceCode {
+	width: 232px;
+	font: 9px black Arial;
+	background-color: black;
+	color: rgb(4, 255, 0);
+	background-image: url(../images/itemlist-bg.webp);
+}
+#classList span{
+	padding:5px;
+	border-top-left-radius: 10px;
+	border-top-right-radius: 10px;
+	border: 1px gray solid;
+	border-bottom: 0px;
+	cursor: pointer;
+	margin-right: 0px;
+}
+#classList .spanFocus,#classList span:hover {
+	border-color: wheat;
+	background-color: #0059a0;
+}
+/* =========技能配置========== */
+#skillContent{
+	border: 1px gray solid;
+	height: 540px;
+	display: flex;
+	flex-wrap: wrap;
+	align-content: flex-start;
+	justify-content: center;
+}
+#skillContent .skillGird{
+	cursor: move;
+	z-index: 200;
+}
+.skillSlot{
+	display: block;
+	width:105px;
+}
+.dragOver{
+	border:2px white dotted;
+	/* transform: scale(1.2); */
+}
+.skillGird {
+	display: inline-block;
+	margin: 10px 10px 0px 10px;
+	cursor:pointer;
+	border-radius: 10px;
+}
+.skillGirdNone{
+	width: 64px;
+	height: 64px;
+	background-color: rgb(22 22 22);
+}
+.skillGird:hover{
+	filter: brightness(1.5);
+	scale: 1.2;
+}
+.skillGirdText{
+	width: 100%;
+	font-size: 12px;
+	word-break:normal
+}
+/* =========技能配置========== */
+/* =========技能加点========== */
+#skillBounds,.weaverBounds{
+	display: flex;
+	justify-content: center;
+	flex-wrap: wrap;
+	align-content: flex-start;
+	min-height: 405px;
+}
+.nodeSlot{
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+.nodeImg{
+	clip-path: circle(50%);
+	transform: scale(0.7);
+	transform-origin: center;
+}
+.nodeImg2{
+	clip-path: polygon(50% 0,95% 25%,95% 75%,50% 100%,5% 75%,5% 25%);
+	/* 六角形 */
+	transform: scale(0.7);
+	transform-origin: center;
+}
+.nodeImg:hover,.nodeImg2:hover{
+	filter: brightness(1.5);
+	transform: scale(0.9);
+	cursor: pointer;
+}
+.nodePoint{
+	font-family: Forum;
+    font-size: 10px;
+    display: inline;
+    background: #111;
+    border: 1px solid #292929;
+	border-radius: 5px;
+    padding: 0 3px;
+	width: 36px;
+}
+.nodeStatsDiv{
+	display:flex;
+	align-items: center;
+	font-size:14px
+}
+.highlight{
+	background: #0059a0;
+}
+/* =========技能加点========== */
+/* =========角色修改/天赋加点========== */
+.pcontainer{
+	display: flex;
+	justify-content: center;
+	align-content: center;
+}
+.playerOperation{
+	display:inline-block;
+	width: 620px;
+	height: 150px;
+	padding: 10px;
+	border: 1px gray solid;
+	border-radius: 20px;
+	margin-right: 20px;
+}
+.playerOperation div{
+	display: flex;
+	padding:5px 0px;
+}
+.otherOperation{
+	display:inline-block;
+	width: 500px;
+	height: 150px;
+	padding: 10px;
+	border: 1px gray solid;
+	border-radius: 20px;
+}
+.otherOperation div{
+	display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+.otherOperation input{
+	margin: 0px 5px;
+}
+.playerMastery{
+	width: 32px;
+	height: 350px;
+	display: flex;
+	flex-direction: column;
+}
+.box{
+	width: 64px;
+	height: 64px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin: 15px 0px;
+	cursor: pointer;
+	z-index: 1;
+}
+.boxImg{
+	width: 64px;
+	height: 64px;
+	transform-origin: center center;
+	transform: rotate(45deg);
+	border: 1px gray solid;
+	background-color: #171614;
+}
+.boxSelect{
+	z-index: 3;
+}
+.boxSelect .boxImg{
+	background-color: rgb(71, 2, 100);
+	box-shadow: 0px 0px 4px 4px wheat;
+}
+.box:hover .boxImg{
+	background-color: #0059a0;
+	box-shadow: 0px 0px 4px 4px wheat;
+}
+.box:hover .mastery,.boxSelect .mastery{
+	transform: scale(1.4);
+}
+.playerMastery .mastery{
+	transform-origin: center;
+	position: absolute;
+}
+.passivePanel{
+	width: 1100px;
+	padding: 10px;
+	border: 1px gray solid;
+	padding-left: 50px;
+	background-color: rgba(0, 0, 0, 0.85);
+	z-index: 2;
+}
+.passiveInfo{
+	width: 18%;
+	height:335px;
+	display: block;
+	text-align: left;
+	font-size: 12px;
+	padding: 10px;
+	overflow: hidden;
+}
+.passiveNodes{
+	display: flex;
+	justify-content: center;
+	flex-wrap: wrap;
+	align-content: flex-start;
+	height: 335px; 
+	width: 64%;
+	padding: 10px;
+	border: 1px gray solid;
+	border-radius: 20px;
+	background-color: #171614;
+}
+.noColor{
+	/* Chrome, Safari, Opera 黑白滤镜*/
+	-webkit-filter: grayscale(1);
+	filter: grayscale(1);
+}
+/* =========角色修改/天赋加点========== */
+.ItemGrid {
+	position: absolute;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	cursor: pointer;
+	background-size: 100% 100%;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+.ItemGrid:hover{
+	filter: brightness(1.5);
+}
+.ItemGrid img{
+	position: absolute;
+	right: 0px;
+	top: 0px;
+	width: 16px;
+	height: 16px;
+	display: none;
+}
+.ItemGrid:hover img{
+	display: block;
+}
+.ItemGridImg {
+	/* display: inline-block; 1*1格的物品缩放使用0.5*/
+	background-image:url("../../data/version140/db/res/8966bf63e21104f5b494cc5a5aa7477e.webp");
+	transform: scale(0.8);
+	position: absolute;
+}
+.ItemGridImg:hover{
+	filter: brightness(1.2);
+	/* transform: scale(1); */
+}
+#affixPanel{
+	border: 2px solid;
+	box-shadow: 2px 2px 4px white;
+	background-image: url(../images/itemlist-bg.webp);
+	font-size: 12px;
+	color: wheat;
+	left:50px;
+	top:90px;
+	width:470px;
+	height: auto;
+	position:absolute;
+	z-index: 500;
+	display: none;
+}
+#affixesDiv{
+	background-size: 100% 100%;
+	background-position: center;
+	background-repeat: no-repeat;
+	padding:10px;
+}
+#affixesDiv input[type="range"]{
+	cursor: pointer;
+}
+#affixesDiv input[type="text"] {
+	width: 24px;
+	color:white;
+	background-color: rgb(4, 88, 3);
+}
+.stashListButton{
+	position: absolute;
+    top: 90px;
+    left: 525px;
+    display: block;
+    width: 35px;
+    height: 110px;
+    cursor: pointer;
+	background-color: #8080802d;
+}
+.stashListButton:hover{
+	background-color: #80808000;
+}
+#stashListPanel{
+	position: absolute;
+	top:152px;
+	left:57px; 
+	display: inline-block;
+	width:466px;
+	height:660px;
+}
+#stashTabPanel {
+	position: absolute;
+    top: 124px;
+    left: 557px;
+    display: none;
+    width: 218px;
+    height: 681px;
+    background-image: url(../images/itemlist-bg.webp);
+    box-shadow: 0px 0px 4px 4px black inset;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.mybutton{
+	display: inline-block;
+	color: wheat;
+	cursor: pointer;
+	background-image: url(../images/button.png);
+	background-size: 100% 100%;
+	background-position: center;
+	background-repeat: no-repeat;
+	text-align: center;
+}
+.mybutton:hover{
+	filter: brightness(1.5);
+}
+.newToolButton{
+	/* position:absolute; */
+	width:180px;
+	height: 30px;
+	padding-top: 8px;
+	margin-bottom: 4px;
+}
+.newToolButtonPanel{
+	position: absolute;
+	top: 365px;
+	right: 40px;
+	background-color: #0b0b09;
+	width: 220px;
+	height: 170px;
+	display: none;
+}
+.newItemPanel,.skillPanel,.playerInfoPanel,.timelinePanel,.importPanel,.weaverPanel{
+	position: absolute;
+	top:26px;
+	width: 100%;
+	height: 97%;
+	background-color: rgba(0, 0, 0, 0.9);
+	z-index: 190;
+	display: none;
+}
+#newItemTree{
+	width: 240px;
+	overflow-y: auto;
+	margin: 10px;
+}
+#newItemList{
+	width: 98%;
+	height: 94%;
+	overflow-y: auto;
+	text-align: left;
+	margin: 10px;
+	flex-flow: row wrap;
+    display: flex;
+	align-content: flex-start;
+}
+.ItemImg {
+	/* width: 83px; */
+	background-size: 100% 100%;
+	background-position: center;
+	background-repeat: no-repeat;
+	justify-content: center;
+	align-items: center;
+	display: flex;
+	margin: 5px;
+}
+.itemDesc{
+	display: inline-block;
+	cursor: pointer;
+	margin: 10px;
+	font-size: 14px;
+	background-color: #171614;
+	color:#999;
+	width: 320px;
+}
+.itemDesc .itemText{
+	word-wrap: break-word;
+	width: 220px;
+	margin: 0px 5px 0px 5px;
+}
+.itemDesc:hover{
+	background-color: #0059a0;
+}
+.itemDesc .desc-title{
+	background: none;
+	color: #e3ba6b;
+	margin: 10px 0px 5px 5px;
+}
+.itemMods{
+	display:flex;
+	flex-direction: column;
+}
+.itemMods div{
+	background-color: #242323;
+	padding: 5px;
+	margin: 2px 10px;
+	color:white
+}
+.itemMods .alt{
+	color: gray;
+	font-size: 12px;
+}
+.itemMods .mod-value{
+	color:#79a7ea;
+}
+.itemdb-null,.itemdb-undefined{
+	width: 83px;
+	height: 83px;
+	background-image: url(../images/null.png);
+}
+.timelineButton{
+	position: absolute;
+	top: 820px;
+	width: 185px;
+	height: 30px;
+	padding-top: 8px;
+	left: 350px;
+}
+.timelineMap{
+	width: 600px;
+    background-image: url(../images/timeline.png);
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.timelineArea{
+	position: absolute;
+	display: flex;
+    width: 100px;
+    height: 100px;
+    cursor: pointer;
+	border-radius: 50px;
+	font-weight: bolder;
+	color: #02ff00;
+	justify-content: center;
+	align-items: center;
+}
+.timelineArea:hover{
+	color: rgb(184, 0, 0);
+	
+}
+.timelineData{
+	width: 600px;
+}
+
+
+/* ----------阵营面板样式------------- */
+.factionList{
+	background-image: url(../images/faction.jpg);
+    height: 690px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100% 100%;
+	display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+	padding:0 20px
+}
+.factionGrid{
+	background-color: rgb(5 5 5 / 90%);
+	cursor: pointer;
+	border-radius: 20px;
+	padding: 20px 10px 10px 10px;
+	text-align: left;
+	position: relative;
+}
+.factionGrid-active{
+	background-color: rgb(5 5 5 / 0);
+}
+.factionGrid:hover{
+	background-color: rgb(5 5 5 / 0);
+}
+.factionObject-in-flag{
+	background-image: url(../images/faction_active.png);
+	background-repeat: no-repeat;
+    background-size: contain;
+	position: absolute;
+    width: 48px;
+    height: 48px;
+}
+.factionObject-button{
+	width: 100%;
+	height: 100%;
+    border-radius: 5px;
+    background-color: #433a6c00;
+	color: white;
+	font-size: 14px;
+	cursor: pointer;
+	border: 0px;
+}
+.factionObject-button:hover{
+	filter: brightness(1.5);
+	background-color: #640202;
+}
+.factionObject-in{
+	width: 100px;
+    height: 32px;
+    position: absolute;
+    top: 120px;
+	left:75px;
+	background-color: #3a6c3e;
+	border-radius: 5px;
+}
+.factionObject-out{
+	width: 48px;
+    height: 32px;
+    position: absolute;
+	right: 20px;
+	top: 30px;
+	background-color: #433a6c;
+	border-radius: 5px;
+}
+.factionObject-content{
+	position: absolute;
+	top: 200px;
+	padding: 0 30px;
+}
+.factionObject-content div{
+	padding: 10px 0;
+}
+/* -------阵营面板样式---------- */

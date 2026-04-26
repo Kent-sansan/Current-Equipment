@@ -1,0 +1,614 @@
+﻿<!DOCTYPE html>
+<html lang="zh-cn" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta name="referrer" content="origin-when-cross-origin" />
+	<meta name="description" content="最后纪元-Last Epoch 存档修改器- 制作者：枯竭的思维 -" />
+	<meta property="og:description" content="最后纪元-Last Epoch 存档修改器- 制作者：枯竭的思维 -" />
+	<meta http-equiv="Cache-Control" content="no-transform" />
+	<meta http-equiv="Cache-Control" content="no-siteapp" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<title>最后纪元-Last Epoch 存档修改器- 制作者：枯竭的思维 -</title>
+	<link rel="stylesheet" type="text/css" href="saver/style/myStyle.css">
+	<link rel="stylesheet" type="text/css" href="data/version140/db/res/8966bf63e21104f5b494cc5a5aa7477e.css">
+	<link rel="stylesheet" type="text/css" href="data/version140/planner/res/d285216918221e26ef5d5b32f3407c4a.css">
+	<link rel="stylesheet" type="text/css" href="saver/script/lib/select2.min.css">
+	<link rel="stylesheet" type="text/css" href="saver/style/zTreeStyle/zTreeStyle.css">
+	<link rel="stylesheet" type="text/css" href="saver/script/lib/jquery-ui.css">
+	<script type="text/javascript" src="saver/script/lib/jquery-3.6.1.min.js"></script>
+	<script type="text/javascript" src="saver/script/lib/jquery-ui.min.js"></script>
+	<script type="text/javascript" src="saver/script/lib/FileSaver.min.js"></script>
+	<script type="text/javascript" src="saver/script/lib/jszip.min.js"></script>
+	<script type="text/javascript" src="saver/script/lib/select2.min.js"></script>
+	<script type="text/javascript" src="saver/script/lib/jquery.ztree.core.min.js"></script>
+	<script type="text/javascript" src="data/version140/db/js/7fb40f0c001d654d55e6e04f0cdbc250.js"></script>
+	<script type="text/javascript" src="data/version140/planner/js/40dab5acfdf3136034567ebcf90b2da9.js"></script>
+	<script type="text/javascript" src="data/version140/endgame/js/0ed55ef61b746fd69188d7ef71caa3d1.js"></script>
+	<script type="text/javascript" src="data/version140/factions/js/a90df40e7c7774321f7b6169e64521d1.js"></script>
+	<script type="text/javascript" src="saver/script/data/def_common.min.js"></script>
+	<script type="text/javascript" src="saver/script/data/def_blessingDB.js"></script>
+	<script type="text/javascript" src="data/version140/i18n/full/zh.json"></script>
+	<script type="text/javascript" src="saver/script/main.min.js"></script>
+</head>
+
+<body>
+	<div style="display:inline">
+		<!-- 主背景面板 -->
+		<div class="uiPanel">
+			<div>
+				<label for="filePlay" style="color:#0059a0">最后纪元-Last Epoch 存档修改器 - 版本：V3.2(支持游戏版本1.4.X) - 制作者：枯竭的思维 -
+				</label>
+				<label for="fileInventory" style="color:red">🚩保存后再导出替换原存档文件使用（注意备份原存档文件）</label>
+			</div>
+			<!--角色列表-->
+			<div class="playerPanel">
+				<div id="playerList"></div>
+			</div>
+			<!-- 文件操作面板 -->
+			<div class="filePanel">
+				<input style="display: none;" type="file" id="filePlay" accept="" onchange="openPlayerJsonFile()" />
+				<input style="display: none;" type="file" id="fileInventory" accept=""
+					onchange="openInventoryJsonFile()" />
+				<input type="file" id="importfolder" style="display: none;" onchange="readFromFolder(this)"
+					multiple="multiple" webkitdirectory="true">
+				<div title="请完全退出游戏后再打开存档文件夹" class="fileButton" onclick="$('#importfolder').click()">
+					<div style="margin-top: 15px;">📂打开存档文件夹</div>
+				</div>
+				<div title="导出仓库存档文件后，在完全退出游戏后替换原存档文件生效" class="fileButton" onclick="exportCurrent()">
+					<div style="margin-top: 15px;">📤导出当前角色</div>
+				</div>
+				<div title="导出角色存档文件后，在完全退出游戏后替换原存档文件生效" class="fileButton" onclick="exportAll()">
+					<div style="margin-top: 15px;">📚导出所有角色</div>
+				</div>
+			</div>
+			<!-- 角色背包面板 -->
+			<div id="mainPanel"></div>
+			<!--仓库面板-->
+			<div id="stashListPanel"></div>
+			<!--仓库列表按钮-->
+			<div class="stashListButton" title="点击切换仓库页列表的显示和隐藏" onclick="togglePanelDisplay('stashTabPanel')"></div>
+			<!--仓库列表-->
+			<div id="stashTabPanel">
+				<ul id="stashTab" class="ztree"></ul>
+			</div>
+			<!-- 金币面板 -->
+			<div style="position: absolute;top: 510px;left: 790px;color: wheat;background-color: black;">
+				骷髅币
+					<input type="text" value="" id="ancientBones"
+					style="width: 63px;background-color: black;border: none;color: wheat;text-align: right;" />
+				<label title="点击保存对金币值的修改" for="playGold" style="cursor: pointer;" onclick="saveGold()">金币</label>
+				<input type="text" value="" id="playGold"
+					style="width: 90px;background-color: black;border: none;color: wheat;text-align: right;" />
+			</div>
+			<!-- 导入按钮面板 -->
+			<div class="newToolButtonPanel">
+				<!-- 编织者天赋修改按钮 -->
+				<div class="mybutton newToolButton" onclick="showWeaverPanel()">🔯编织者天赋树</div>
+				<!-- 导入模拟角色按钮 -->
+				<div class="mybutton newToolButton" onclick="onClick_FromPlanner()">💂导入模拟角色</div>
+				<!-- 导入线上角色按钮 -->
+				<div class="mybutton newToolButton" onclick="onClick_FromOnline()">👥导入线上角色</div>
+				<!-- 导入基底物品按钮 -->
+				<div class="mybutton newToolButton" onclick="getItemsTree()">📥导入基底物品</div>
+			</div>
+			<!-- 是否按照物品类型限定词缀列表 -->
+			<div class="mybutton" onclick=""
+				style="left: 44px;position: absolute;top: 820px;width: 220px;height: 30px;padding-top: 8px;">
+				<input type="checkbox" id="chkLimitAffixList">按物品类型限定词缀列表
+			</div>
+			<!-- 时间线面板按钮 -->
+			<div class="mybutton timelineButton" onclick="getTimelineData()">👽时间线巨石碑修改</div>
+			<!-- 时间线修改面板 -->
+			<div class="timelinePanel">
+				<div style="display:flex;height: 780px;">
+					<div class="timelineMap"></div>
+					<div>
+						<fieldset style="width:630px;height:700px;margin:20px 40px;">
+							<legend>
+								<h3><span id="timelineName">点击左侧时间线巨石碑进行修改</span></h3>
+							</legend>
+							<!-- <div id="t_normal" style="margin-bottom: 100px;display: none;">
+								普通难度<hr>
+								<label for="t_corruption">腐败值：</label><input type="text" id="t_corruption" /><br>
+								<label for="t_stability">稳定值：</label><input type="text" id="t_stability" /><br>
+								<label for="t_gazeOfOrobyss">奥罗比斯的凝视值：</label><input type="text" id="t_gazeOfOrobyss" /><br>
+								<label for="t_depth">已完成秘境数：</label><input type="text" id="t_depth" /><br>
+							</div> -->
+							<div id="t_defficulty" style="margin-bottom: 100px;display: none;">
+								传奇难度
+								<hr>
+								<label for="t_corruption_d">腐败值：</label><input type="text" id="t_corruption_d" /><br>
+								<label for="t_stability_d">稳定值：</label><input type="text" id="t_stability_d" /><br>
+								<label for="t_gazeOfOrobyss_d">奥罗比斯的凝视值：</label><input type="text"
+									id="t_gazeOfOrobyss_d" /><br>
+								<label for="t_depth_d">已完成秘境数：</label><input type="text" id="t_depth_d" /><br>
+							</div>
+							<h3 id="t_info" style="color: red;"></h3>
+							<div id="t_btnSave">
+								<span class="mybutton" style="width: 140px;height: 40px;padding-top: 14px;"
+									onclick="saveTimelineData()">保存修改</span>
+							</div>
+						</fieldset>
+					</div>
+				</div>
+				<div>
+					<span class="mybutton" style="width: 140px;height: 40px;padding-top: 14px;"
+						onclick="unlockMonolithAndTimeline()" title="共十个时间线巨石碑，每个有两个难度">解锁全部巨石碑</span>
+					<span class="mybutton" style="width: 140px;height: 40px;padding-top: 14px;"
+						onclick="resetTimeLineValue()" title="一键将所有已解锁的时间轴的稳定值设置为5000">提高全部稳定值</span>
+					<span class="mybutton" style="width: 200px;height: 40px;padding-top: 14px;"
+						onclick="setAllTimelineCorruption()" id="btnSetAllCorruption" title="一键设置所有已解锁的时间轴的腐败值">全部腐败值设置为500</span>
+					<span style="position: absolute;left: 650px;top: 755px;">
+						<input type="range" max="5000" min="0" id="corruptionRange" value="500" step="50" style="cursor:pointer;width: 185px;" 
+						onInput="corruptionRange_onChange()" title="腐败值调节"/>
+					</span>
+					<span class="mybutton" style="width: 140px;height: 40px;padding-top: 14px;"
+						onclick="$(this).parent().parent().hide()">关 闭</span>
+				</div>
+			</div>
+			<!-- 编织者天赋修改面板 -->
+			<div class="weaverPanel">
+				<h3>编织者天赋（为确保修改成功，游戏中至少先加1点）</h3>
+				<div class="weaverBounds" style="height: 650px;padding: 20px 20px;gap: 25px;margin: 20px 70px;border-radius: 20px;border: 1px solid wheat;"></div>
+				<span class="mybutton" style="width: 110px;height: 40px;padding-top: 14px;"
+						onclick="setAllNodePoint(2,false)">全部重置</span>
+					<span class="mybutton" style="width: 110px;height: 40px;padding-top: 14px;"
+						onclick="setAllNodePoint(2,true)">全部加满</span>
+				<span class="mybutton" style="width: 185px;height: 40px;padding-top: 14px;"
+					onclick="saveWeaverBounds()">保存加点配置</span>
+					<span class="mybutton" style="width: 185px;height: 40px;padding-top: 14px;"
+					onclick="$(this).parent().hide()">关闭</span>
+			</div>
+			<!-- 基底物品选择面板 -->
+			<div class="newItemPanel">
+				<div style="display:flex;height: 780px;">
+					<div id="newItemTree" class="ztree"></div>
+					<div style="width: 88%;display: inline-block;">
+						<div style="text-align:left;padding:10px 0px 0px 10px">
+							<label><input type="radio" name="rtype" value="N" checked>📑普通</label>
+							<label><input type="radio" name="rtype" value="U">暗金</label>
+							<label><input type="radio" name="rtype" value="S">📗套装</label>
+							<span>👈在这设置选项后再点击树节点筛选物品品质</span>
+						</div>
+						<div id="newItemList"></div>
+					</div>
+				</div>
+				<span style="position:absolute;bottom: 20px;left: 40px;">🔝双击物品添加到背包📢</span>
+				<div style="position:absolute;bottom: 20px;left: 240px;">📢导入暗金物品默认传奇潜能：
+					<input type="range" max="4" min="0" id="legendAffixsCountRange" value="0" step="1" style="cursor:pointer;width: 60px;" 
+					onInput="legendAffixsCountRange_onChange()" title="导入暗金物品默认传奇潜能，范围为0-4"/>
+					<label id="lab_LegendAffixsCount">0</label>
+				</div>
+				<span class="mybutton" style="width: 185px;height: 40px;padding-top: 14px;"
+					onclick="$(this).parent().hide()">关闭</span>
+			</div>
+			<!-- 角色/技能面板开关按钮 -->
+			<div class="switchPanel">
+				<div title="点击切换角色修改面板的显示和隐藏" class="mybutton skillSwitch" onclick="$('.playerInfoPanel').show()">
+					<div style="margin-top: 15px;">👤角色修改</div>
+				</div>
+				<div title="点击切换技能修改面板的显示和隐藏" class="mybutton skillSwitch" onclick="$('.skillPanel').show()">
+					<div style="margin-top: 15px;">🔰技能修改</div>
+				</div>
+			</div>
+			<!-- 技能修改面板 -->
+			<div class="skillPanel">
+				<!-- 技能清单 -->
+				<div style="display:flex;height: 780px;">
+					<div class="skillList">
+						<div id="classList" style="height: 27px;text-align: left;margin-top: 20px;"></div>
+						<div id="skillContent"></div>
+						<div>
+							<h3>配置快捷技能栏</h3>
+							<div id="optSkillSlots" style="display: flex;justify-content: center;">
+								<div class="skillSlot">
+									<div class="skillGird skillGirdNone"></div>
+									<div class="skillGirdText">Q</div>
+								</div>
+								<div class="skillSlot">
+									<div class="skillGird skillGirdNone"></div>
+									<div class="skillGirdText">W</div>
+								</div>
+								<div class="skillSlot">
+									<div class="skillGird skillGirdNone"></div>
+									<div class="skillGirdText">E</div>
+								</div>
+								<div class="skillSlot">
+									<div class="skillGird skillGirdNone"></div>
+									<div class="skillGirdText">R</div>
+								</div>
+								<div class="skillSlot">
+									<div class="skillGird skillGirdNone"></div>
+									<div class="skillGirdText">右键</div>
+								</div>
+							</div>
+						</div>
+						<div style="margin-top: 20px;text-align: left;color: gray;">
+							🔝从技能列表中拖动并放置到技能槽位进行配置<br>拖动完成即生效，不需单独保存</div>
+					</div>
+					<!-- 技能加点 -->
+					<div class="skillBoundsPanel">
+						<div style="margin: 10px;height: 190px;">
+							<h3>配置技能及加点</h3>
+							<div id="skillDiv" style="display: flex;justify-content: center;min-height: 142px;">
+								<div class="skillSlot">
+									<div class="skillGird skillGirdNone"></div>
+									<div class="skillGirdText"></div>
+								</div>
+								<div class="skillSlot">
+									<div class="skillGird skillGirdNone"></div>
+									<div class="skillGirdText"></div>
+								</div>
+								<div class="skillSlot">
+									<div class="skillGird skillGirdNone"></div>
+									<div class="skillGirdText"></div>
+								</div>
+								<div class="skillSlot">
+									<div class="skillGird skillGirdNone"></div>
+									<div class="skillGirdText"></div>
+								</div>
+								<div class="skillSlot">
+									<div class="skillGird skillGirdNone"></div>
+									<div class="skillGirdText"></div>
+								</div>
+							</div>
+						</div>
+						<div style="margin: 10px;padding:20px 0px;border: 1px gray solid;">
+							<div id="skillBounds"></div>
+						</div>
+						<div>
+							<span class="mybutton" style="width: 110px;height: 40px;padding-top: 14px;"
+								onclick="setAllNodePoint(0,false)">全部重置</span>
+							<span class="mybutton" style="width: 110px;height: 40px;padding-top: 14px;"
+								onclick="setAllNodePoint(0,true)">全部加满</span>
+							<span><input type="checkbox" id="chkMaxPointLimite" checked>最大点数限制</span>
+							<span class="mybutton" style="width: 110px;height: 40px;padding-top: 14px;"
+								onclick="setSkillXp()">直升满级</span>
+							<span class="mybutton" style="width: 120px;height: 40px;padding-top: 14px;"
+								onclick="saveSkillBounds()">保存加点配置</span>
+						</div>
+						<div style="margin-top: 40px;text-align: right;color: gray;">📢选中技能后点击节点图标加点，鼠标左键（+）/ 鼠标右键（-）
+							<br>【注意】切换技能前要单独保存当前技能的加点配置才能生效
+						</div>
+					</div>
+				</div>
+				<div>
+					<span class="mybutton" style="width: 185px;height: 40px;padding-top: 14px;"
+						onclick="$(this).parent().parent().hide()">关 闭</span>
+				</div>
+			</div>
+			<!-- 角色修改面板 -->
+			<div class="playerInfoPanel" style="color: wheat;">
+				<fieldset style="height: 230px;margin:20px 40px;">
+					<!-- 角色其它修改 -->
+					<legend>
+						<h3>角色相关</h3>
+					</legend>
+					<div class="pcontainer">
+						<div class="playerOperation">
+							<div>
+								<label for="playName">角色名：</label><input type="text" value="" id="playName"
+									style="width:60px;" />
+								<label for="playLevel">等级：</label><input type="text" value="" id="playLevel"
+									style="width:30px;" />
+								<label for="playXP">经验值：</label><input type="text" value="" id="playXP"
+									style="width:60px;" />
+								<input id="chkHardcore" type="checkbox" value="0" /><label for="chkHardcore">专家</label>
+								<input id="chkMasochist" type="checkbox" value="0" /><label
+									for="chkMasochist">受虐狂</label>
+								<input id="chkSolo" type="checkbox" value="0" /><label for="chkSolo">独狼</label>
+								<input type="button" title="【重要】独狼和专家模式的角色有专属的仓库，如果角色名和模式变更了会导致专属仓库改变。" value="保存角色状态"
+									onclick="savePlayInfo()" />
+							</div>
+							<hr>
+							<div>
+								<label for="optPlayClass">职业：</label>
+								<select name="optPlayClass" id="optPlayClass" onchange="classSelectOnChange()"
+									style="width:160px;"></select>
+								<label for="optPlayMastery">专精：</label>
+								<select name="optPlayMastery" id="optPlayMastery" style="width:240px;"></select>
+								<input type="button" title="对职业和专精的修改会清空所有技能的配置和加点，技能栏的设定也会清空" value="保存职业和专精"
+									onclick="saveClassMastery()" />
+							</div>
+							<hr>
+							<div>
+								<label for="optPlayCycle">转换角色赛季：</label>
+								<select name="optPlayCycle" id="optPlayCycle" style="width:160px;">
+									<option value="1">永续离线</option>
+									<option value="2">1.0离线</option>
+									<option value="3">1.1离线</option>
+									<option value="4">1.1.7离线</option>
+									<option value="5">S2赛季离线</option>
+									<option value="6">S3赛季离线</option>
+									<option value="7">S4赛季离线</option>
+								</select>
+								<input type="button" title="转换赛季后角色只能使用赛季对应的仓库" value="保存赛季修改"
+									onclick="saveChangeCycle()" />
+							</div>
+						</div>
+						<div class="otherOperation">
+							<div style="display: flex; flex-direction: column;height: 120px;align-items: flex-start;">
+								<label><input type="checkbox" onclick="toggleButtonState(this)"
+										value="resetHardcore">专家模式复活</label>
+								<label><input type="checkbox" onclick="toggleButtonState(this)" value="completeAllQuest"
+										checked>跳过剧情和任务</label>
+								<label><input type="checkbox" onclick="toggleButtonState(this)"
+										value="unlockAllWayPoint" checked>解锁所有传送点</label>
+								<label><input type="checkbox" onclick="toggleButtonState(this)" value="unlockAllBless"
+										checked>解锁（发现）所有祝福</label>
+								<label><input type="checkbox" onclick="toggleButtonState(this)" value="unlockAllShards"
+										checked>词缀碎片数量置为5000</label>
+								<label><input type="checkbox" onclick="toggleButtonState(this)"
+										value="unlockRuneAndGlyph" checked>符文雕纹数量置为5000</label>
+								<label><input type="checkbox" onclick="toggleButtonState(this)"
+										value="unlockDungeonTier" checked>解锁地下城所有难度</label>
+								<label><input type="checkbox" onclick="toggleButtonState(this)" value="unlockArenaTiers"
+										checked>解锁竞技场所有难度</label>
+								<label><input type="checkbox" onclick="toggleButtonState(this)" value="addKeyItemNum"
+										checked>钥匙数量置为500</label>
+								<label><input type="checkbox" onclick="toggleButtonState(this)" value="addBzItemNum"
+										checked>编织秘境物品数量置为500</label>
+							</div>
+							<div style="display: flex; height: 30px;">
+								<input type="button" value="全选" onclick="selectAll()">
+								<input type="button" value="取消全选" onclick="unselectAll()">
+								<input type="button" value="执行选中的操作" onclick="executeSelectedActions()">
+							</div>
+
+						</div>
+					</div>
+				</fieldset>
+				<fieldset style="height: 450px;margin:20px 40px;">
+					<!-- 角色天赋加点 -->
+					<legend>
+						<h3>天赋加点</h3>
+					</legend>
+					<div class="pcontainer">
+						<div id="playerMastery" class="playerMastery">
+							<div class="box">
+								<div class="boxImg"></div>
+								<div class="mastery bg bg-r-452"></div>
+							</div>
+							<div class="box">
+								<div class="boxImg"></div>
+								<div class="mastery bg bg-r-452"></div>
+							</div>
+							<div class="box">
+								<div class="boxImg"></div>
+								<div class="mastery bg bg-r-452"></div>
+							</div>
+							<div class="box">
+								<div class="boxImg"></div>
+								<div class="mastery bg bg-r-452"></div>
+							</div>
+						</div>
+						<div class="passivePanel">
+							<div style="display:flex;">
+								<div id="masterPassiveInfo" class="passiveInfo">专精信息</div>
+								<div id="passiveBonuses" class="passiveNodes"></div>
+								<div id="passiveNodeInfo" class="passiveInfo">节点信息</div>
+							</div>
+						</div>
+					</div>
+				</fieldset>
+				<div>
+					<span class="mybutton" style="width: 110px;height: 40px;padding-top: 14px;"
+						onclick="setAllNodePoint(1,false)">全部重置</span>
+					<span class="mybutton" style="width: 110px;height: 40px;padding-top: 14px;"
+						onclick="setAllNodePoint(1,true)">全部加满</span>
+					<span class="mybutton" style="width: 140px;height: 40px;padding-top: 14px;"
+						onclick="savePassivePoint()">保存加点配置</span>
+					<span class="mybutton" style="width: 140px;height: 40px;padding-top: 14px;"
+						onclick="$(this).parent().parent().hide()">关 闭</span>
+				</div>
+			</div>
+			<!-- 导入线上角色面板 -->
+			<div class="importPanel">
+				<div style="display:flex;height: 780px;">
+					<div class="skillList">
+						<fieldset style="height: 700px;margin:20px 40px; ">
+							<!-- 角色其它修改 -->
+							<legend>
+								<h3>获取角色数据</h3>
+							</legend>
+							<div style="text-align: left;">
+								<div
+									style="background-color: black;padding: 0px 0px 70px 0px;position: relative;z-index: 2;">
+									<div id="onlineStep1" style="display: none;">
+										<span>㊀按下面步骤输入要导入的线上账号名称和角色名称，可以先通过<a
+												href="https://www.lastepochtools.com/ladders/zh/" target="_blank"
+												style="color: green;">天梯榜</a>直接获取账号和角色名。</span><br>
+										<label for="txtOnlineAccountName">账号名称：</label><input type="text" value=""
+											id="txtOnlineAccountName"
+											style="width:100px;" />❓自己的账号通过游戏中按“H”键查看，别人的账号和角色可以从如天梯榜、聊天框、加好友或其它渠道得到。<br>
+										<label for="txtOnlinePlayerName">角色名称：</label><input type="text" value=""
+											id="txtOnlinePlayerName" style="width:100px;" />❓如有可以填入，也可通过<a href="#"
+											onclick="showPlayListByAccount()" style="color: green;">【点这】</a>
+										按照已输入的账号名称，在下框中查看角色列表，再填入角色名称。也可以从<a
+											href="https://www.lastepochtools.com/ladders/zh/" target="_blank"
+											style="color: green;">天梯榜</a>获得。
+									</div>
+									<div id="plannerStep1" style="display: none;">
+										㊀将BD的模拟器链接地址输入到下面：<br><br>
+										<label for="txtPlannerUrl">BD模拟器链接：</label><input type="text" value=""
+											id="txtPlannerUrl" style="width:500px;" />
+									</div>
+								</div>
+								<div id="divStep" style="position: relative;top: -179px;width: 690px;z-index: 1;">
+									<div id="onlineStep2">
+										<iframe style="width: 100%;height: 350px;" id="pagePlayList" frameborder="0"
+											border="0" scrolling="no"></iframe>
+										㊁<a href="#" onclick="showJSCode()"
+											style="color: green;">【点这】</a>生成执行代码，按提示操作后续步骤：
+									</div>
+									<textarea style="width:100%;" placeholder="此处代码生成后请全选复制" rows="3"
+										id="txtJsCode"></textarea>
+									㊂点进上面文本框按“Ctrl+A”全选代码并按“Ctrl+C”复制，然后<a href="#" onclick="openUrl()"
+										style="color: green;">【点这个链接】</a>打开页面。<br>
+									㊃在打开的页面按“F12”键，调出开发者工具界面，切换至“控制台”标签（英文则为“console”）
+									<img src="saver/images/console.png" />，并在控制台中粘贴刚才复制的代码，按回车键运行。<br>
+									㊄稍等片刻，控制台输出如图类似的结果，在该结果处点击鼠标右键，选择“复制object”。<br>
+									<img src="saver/images/result.png" /><br>
+									㊅将复制的内容“Ctrl+V”粘贴在右边的文本框内，然后进行下一步。<br>
+								</div>
+							</div>
+						</fieldset>
+					</div>
+					<div style="margin-left: 100px;" class="skillBoundsPanel">
+						<fieldset style="height: 700px;margin:20px 40px;">
+							<!-- 角色其它修改 -->
+							<legend>
+								<h3>解析导入角色数据</h3>
+							</legend>
+							<h4>🔻🔻🔻粘贴到这🔻🔻🔻</h4>
+							<div>
+								<textarea style="width:100%;" placeholder="将复制的object粘贴在这里" rows="10"
+									id="txtOnlinePlayerData"></textarea>
+							</div>
+							<div style="text-align: left;">
+								㊆<a href="#" onclick="pharsePlayerData()" style="color: green;">【点这】</a>解析数据，得到的角色信息如下：
+								<div style="color: green;margin: 20px;" id="onlineInfo"></div>
+								㊇若数据解析正确，选择导入的项目，点击执行导入按钮。默认会执行解锁所有传送点和完成所有任务。<br><br>
+								<div id="btnImport" style="display: none;">
+									<div>
+										<input id="chkImp_level" type="checkbox" checked /><label
+											for="chkImp_level">等级</label>
+										<input id="chkImp_ClassAndMastery" type="checkbox" checked /><label
+											for="chkImp_ClassAndMastery">职业和专精</label>
+										<input id="chkImp_Model" type="checkbox" value="0" /><label
+											for="chkImp_Model">专家或独狼模式</label>
+										<input id="chkImp_cycle" type="checkbox" checked /><label
+											for="chkImp_cycle">赛季标识</label>
+										<input id="chkImp_SkillTrees" type="checkbox" checked /><label
+											for="chkImp_SkillTrees">技能及加点</label>
+										<input id="chkImp_CharacterTree" type="checkbox" checked /><label
+											for="chkImp_CharacterTree">被动天赋加点</label>
+										<input id="chkImp_equipment" type="checkbox" checked /><label
+											for="chkImp_equipment">装备</label>
+										<input id="chkImp_idols" type="checkbox" checked /><label
+											for="chkImp_idols">神像</label>
+										<input id="chkImp_blessings" type="checkbox" checked /><label
+											for="chkImp_blessings">祝福</label>
+											<input id="chkImp_faction" type="checkbox" value="0"  /><label
+											for="chkImp_faction">阵营(线上)</label>
+											<input id="chkImp_weaver" type="checkbox" value="0" /><label
+											for="chkImp_weaver">编织者天赋</label>
+									</div>
+									<div style="text-align: center;">
+										<span class="mybutton"
+											style="width: 300px;height: 40px;padding-top: 14px;margin: 20px;"
+											onclick="saveImport()">执行导入线上角色数据</span>
+									</div>
+								</div>
+							</div>
+						</fieldset>
+					</div>
+				</div>
+				<div>
+					<span class="mybutton" style="width: 185px;height: 40px;padding-top: 14px;"
+						onclick="$(this).parent().parent().hide()">关 闭</span>
+				</div>
+			</div>
+			<!-- 词缀数据面板 -->
+			<div id="affixPanel">
+				<img src="saver/images/close.png" title="关闭物品词缀面板"
+					style="position: absolute;top:0px;right: 0px ;cursor: pointer;width: 30px;"
+					onclick="this.parentNode.style.display='none'" />
+				<div style="margin-top: 10px;">
+					<input type="checkbox" title="显示/隐藏 数值编辑文本框" id="chkDisplayInput"
+						onchange="toggleAffixInputDisplay()" />
+					<input type="button" value="保存对物品的更改" onclick="saveItemData()" />
+					<input type="button" title="将当前已点击选择的物品复制到背包，自动找到合适的位置放置" value="复制到背包" onclick="copyItem()" />
+					<input type="button" title="所编辑的代码为存档里的物品源码，所有在当前面板上的更改在保存前不会改变该代码" value="编辑代码"
+						onclick="editCode()" />
+					<input type="checkbox" title="开启/关闭 限制词缀总数" checked="checked" id="chkLimite" />限制词缀总数
+				</div>
+				<hr>
+				<div id="affixesDiv"></div>
+			</div>
+			<!-- 打开祝福面板按钮 -->
+			<div class="rightEditorSwitch" onclick="$('#blessingPanel').show()"></div>
+			<!-- 关闭右侧编辑面板按钮 -->
+			<div class="rightEditorSwitch" style="left: 1005px; width: 101px;;" onclick="$('.rightEditorPanel').hide()">
+			</div>
+			<!-- 祝福面板 -->
+			<div id="blessingPanel" class="rightEditorPanel">
+				<img src="saver/images/close.png" title="关闭祝福面板" class="closeCross" onclick="this.parentNode.style.display='none'" />
+				<div id="blessList" style="margin: 20px;display: flex;flex-flow: column;"></div>
+				<hr>
+				<div title="保存对祝福物品的修改，默认祝福的ROLL值设为最大" class="mybutton skillSwitch" onclick="saveBlessing()">
+					<div style="margin-top: 15px;">保存</div>
+				</div>
+			</div>
+			<!-- 打开阵营面板按钮 -->
+			<div class="rightEditorSwitch" style="left: 1110px; width: 90px;;" onclick="$('#factionPanel').show()">
+			</div>
+			<!-- 阵营面板 -->
+			<div id="factionPanel" class="rightEditorPanel">
+				<div id="factionList" class="factionList"></div>
+				<img src="saver/images/close.png" title="关闭阵营面板" class="closeCross"
+					onclick="this.parentNode.style.display='none'" />
+				<hr>
+				<div title="保存阵营数据的修改" class="mybutton skillSwitch" onclick="factionFun.saveFactionData()">
+					<div style="margin-top: 15px;">保存</div>
+				</div>
+			</div>
+			<!-- 代码面板 -->
+			<div id="codePanel">
+				<fieldset>
+					<legend>
+						物品存档代码
+					</legend>
+					<textarea placeholder="点击物品显示对应的存档代码" rows="30" id="SourceCode"></textarea>
+				</fieldset>
+				<input style="width:150px;" type="button" value="保存按代码的修改" onclick="saveItemCode()" />
+				<input type="button" value="退出" onclick="this.parentNode.style.display='none'" />
+			</div>
+		</div>
+		<div>
+			---------------------------❗❗❗特别告知❗❗❗---------------------------<br>
+			修改器为个人爱好制作，更新全凭心情，免费分享发布<br>
+			非开源，虽然没对工具进行任何技术上的授权限制，但未经作者本人许可<br>
+			🈲🈲🈲禁止私自将本工具在其它任意公共平台分享发布或出售，否则后果请自负🈲🈲🈲<br>
+			请认准唯一更新发布地址：<a href="https://www.caimogu.cc/post/285188.html" target="_blank"
+				style="color: green;">https://www.caimogu.cc/post/285188.html</a><br>
+			---------------------------❗❗❗❗❗❗❗❗❗---------------------------
+		</div>
+	</div>
+	<!-- HTML模板 -->
+	<div style="display: none;">
+		<!-- 物品详情显示在清单中的模板 -->
+		<div id="itemDescForList">
+			<div class="itemDesc" name="{i_ids}">
+				<div style="display:flex">
+					<div class="ItemImg" style="background-image: url('saver/images/{i_image}')">
+						<div style="position: relative;" class="ItemGridImg itemdb-{i_sp}"></div>
+					</div>
+					<div class="itemText">
+						<h4>{i_dname}</h4>
+						<div>{i_tname}</div>
+						<div>{i_sname}</div>
+						<div>需求等级：{i_lev}</div>
+						<div>{i_class}</div>
+					</div>
+				</div>
+				{i_implicits}
+				{i_mods}
+			</div>
+		</div>
+		<!-- 技能描述的模板 -->
+		<div id="skillAndNodeDesc">
+			<div style="text-align:left">
+				<h3>{s_name}</h3>
+				<hr>
+				<div>{s_desc}</div>
+				<div style="color:gray;font-style: italic;">{s_alt}</div>
+				<div style="color:gray;font-style: italic;">{s_loreText}</div>
+			</div>
+		</div>
+	</div>
+</body>
+
+</html>
