@@ -1,0 +1,2996 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>最后纪元 - 崇高装备打造计算器</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap');
+  :root {
+    --bg-darkest: #0a0c10; --bg-dark: #12151c; --bg-panel: #181c26;
+    --bg-card: #1e2330; --bg-input: #252a3a; --border: #2a3042;
+    --border-focus: #4a6fa5; --text-primary: #e8e6e3; --text-secondary: #8a8d96;
+    --text-muted: #5a5d66; --gold: #c9aa58; --gold-bright: #e8c94a;
+    --gold-dim: #8a7538; --exalted: #a855f7; --success: #22c55e;
+    --warning: #f59e0b; --danger: #ef4444; --prefix: #3b82f6; --suffix: #f97316;
+    --rune: #06b6d4; --glyph: #ec4899; --radius: 8px; --radius-lg: 12px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Noto Sans SC',system-ui,sans-serif; background:var(--bg-darkest); color:var(--text-primary); min-height:100vh; }
+  body::before { content:''; position:fixed; inset:0; background:radial-gradient(ellipse at 20% 50%,rgba(201,170,88,.03) 0%,transparent 50%),radial-gradient(ellipse at 80% 50%,rgba(168,85,247,.03) 0%,transparent 50%); pointer-events:none; z-index:0; }
+  .app { position:relative; z-index:1; }
+
+  /* Header */
+  .header { text-align:center; padding:28px 24px 20px; border-bottom:1px solid var(--border); background:linear-gradient(180deg,rgba(201,170,88,.06) 0%,transparent 100%); }
+  .header h1 { font-size:26px; font-weight:700; background:linear-gradient(135deg,var(--gold-bright),var(--gold)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:2px; }
+  .header p { color:var(--text-secondary); font-size:13px; margin-top:4px; }
+
+  /* Main layout */
+  .main { max-width:1400px; margin:0 auto; padding:24px; display:grid; grid-template-columns:1fr auto 1fr; gap:24px; align-items:start; }
+
+  /* Panels */
+  .panel { background:var(--bg-panel); border:1px solid var(--border); border-radius:var(--radius-lg); }
+  .panel-header { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+  .panel-header .icon { width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:15px; }
+  .panel-header h2 { font-size:15px; font-weight:600; }
+  .panel-header .subtitle { font-size:11px; color:var(--text-secondary); }
+  .panel-body { padding:18px; }
+  .current-panel .icon { background:rgba(59,130,246,.15); }
+  .target-panel .icon { background:rgba(168,85,247,.15); }
+
+  /* Section label */
+  .section-label { font-size:11px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+
+  /* Equipment selector button */
+  .equip-selector { margin-bottom:18px; }
+  .equip-btn {
+    width:100%; padding:12px 14px; background:var(--bg-card); border:1px solid var(--border);
+    border-radius:var(--radius); cursor:pointer; display:flex; align-items:center; justify-content:space-between;
+    transition:all .15s; color:var(--text-primary); font-size:14px;
+  }
+  .equip-btn:hover { border-color:var(--gold-dim); }
+  .equip-btn.has-value { border-color:var(--gold-dim); background:rgba(201,170,88,.06); }
+  .equip-btn .placeholder { color:var(--text-muted); }
+  .equip-btn .arrow { color:var(--text-muted); font-size:12px; }
+  .equip-btn .selected-name { font-weight:500; }
+  .equip-btn .selected-cat { font-size:11px; color:var(--text-secondary); margin-left:6px; }
+  .equip-clear { width:24px; height:24px; background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:14px; border-radius:4px; display:none; align-items:center; justify-content:center; flex-shrink:0; }
+  .equip-clear:hover { color:var(--danger); background:rgba(239,68,68,.1); }
+  .equip-btn.has-value .equip-clear { display:flex; }
+
+  /* FP section */
+  .fp-section { margin-bottom:18px; padding:12px 14px; background:var(--bg-card); border-radius:var(--radius); border:1px solid var(--border); }
+  .fp-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .fp-label { font-size:13px; color:var(--text-secondary); display:flex; align-items:center; gap:6px; }
+  .fp-input { width:65px; padding:5px 8px; background:var(--bg-input); border:1px solid var(--border); border-radius:6px; color:var(--gold-bright); font-size:15px; font-weight:600; text-align:center; outline:none; }
+  .fp-input:focus { border-color:var(--gold); }
+  .fp-bar { margin-top:8px; height:3px; background:var(--bg-input); border-radius:2px; overflow:hidden; }
+  .fp-bar-fill { height:100%; background:linear-gradient(90deg,var(--danger),var(--warning),var(--success)); border-radius:2px; transition:width .3s; }
+
+  /* Affix list */
+  .affix-section { margin-bottom:14px; }
+  .affix-list { display:flex; flex-direction:column; gap:7px; overflow:visible; }
+  .affix-slot {
+    display:grid; grid-template-columns:60px 1fr 70px 30px; gap:7px; align-items:center;
+    padding:9px 11px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); transition:border-color .15s;
+  }
+  .affix-slot { overflow:visible; }
+  .affix-slot:hover { border-color:var(--border-focus); }
+  .affix-type { font-size:10px; font-weight:600; padding:2px 7px; border-radius:4px; text-align:center; }
+  .affix-type.prefix { background:rgba(59,130,246,.15); color:var(--prefix); }
+  .affix-type.suffix { background:rgba(249,115,22,.15); color:var(--suffix); }
+  .affix-name-input { padding:5px 9px; background:var(--bg-input); border:1px solid var(--border); border-radius:6px; color:var(--text-primary); font-size:12px; outline:none; }
+  .affix-name-input:focus { border-color:var(--border-focus); }
+  .affix-name-input::placeholder { color:var(--text-muted); }
+  .tier-select { padding:5px 6px; background:var(--bg-input); border:1px solid var(--border); border-radius:6px; color:var(--text-primary); font-size:12px; outline:none; cursor:pointer; }
+  .affix-remove { width:28px; height:28px; background:transparent; border:none; border-radius:6px; color:var(--text-muted); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:15px; }
+  .affix-remove:hover { color:var(--danger); background:rgba(239,68,68,.1); }
+  .add-affix-btn { width:100%; padding:7px; background:transparent; border:1px dashed var(--border); border-radius:var(--radius); color:var(--text-muted); font-size:12px; cursor:pointer; margin-top:4px; }
+  .add-affix-btn:hover { border-color:var(--gold-dim); color:var(--gold); }
+
+  /* Sealed affix */
+  .sealed-section { margin-top:12px; padding-top:10px; border-top:1px dashed var(--border); }
+  .sealed-label { font-size:11px; color:var(--text-muted); margin-bottom:6px; display:flex; align-items:center; gap:4px; }
+  .sealed-slot { background:rgba(168,85,247,.04); border-color:rgba(168,85,247,.2); }
+  .sealed-slot .affix-type.sealed { background:rgba(168,85,247,.15); color:var(--exalted); }
+  .sealed-slot .affix-name-input { color:var(--exalted); }
+  .sealed-slot .affix-name-input::placeholder { color:rgba(168,85,247,.4); }
+
+  /* Center column */
+  .center-col { display:flex; flex-direction:column; align-items:center; gap:18px; padding-top:30px; min-width:300px; }
+  .calc-btn {
+    padding:13px 44px; background:linear-gradient(135deg,var(--gold),var(--gold-dim)); border:none;
+    border-radius:var(--radius); color:var(--bg-darkest); font-size:15px; font-weight:700; cursor:pointer;
+    letter-spacing:1px; transition:all .2s; position:relative; overflow:hidden;
+  }
+  .calc-btn:hover { transform:translateY(-1px); box-shadow:0 4px 20px rgba(201,170,88,.3); }
+
+  /* Steps panel */
+  .steps-panel { width:100%; background:var(--bg-panel); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; display:none; }
+  .steps-panel.visible { display:block; }
+  .steps-header { padding:12px 18px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  .steps-header h3 { font-size:14px; font-weight:600; }
+  .steps-body { padding:14px 18px; }
+
+  .overall-rate { display:flex; align-items:center; gap:14px; padding:12px 14px; background:var(--bg-card); border-radius:var(--radius); border:1px solid var(--border); margin-bottom:14px; }
+  .rate-circle { width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; flex-shrink:0; position:relative; }
+  .rate-circle::before { content:''; position:absolute; inset:0; border-radius:50%; border:3px solid var(--border); }
+  .rate-circle.high { color:var(--success); } .rate-circle.high::before { border-color:var(--success); }
+  .rate-circle.mid { color:var(--warning); } .rate-circle.mid::before { border-color:var(--warning); }
+  .rate-circle.low { color:var(--danger); } .rate-circle.low::before { border-color:var(--danger); }
+  .rate-info { flex:1; }
+  .rate-info .label { font-size:11px; color:var(--text-secondary); }
+  .rate-info .value { font-size:18px; font-weight:700; }
+  .rate-info .detail { font-size:11px; color:var(--text-muted); margin-top:2px; }
+
+  .step-list { display:flex; flex-direction:column; gap:7px; }
+  .step-card { display:grid; grid-template-columns:32px 1fr auto; gap:10px; align-items:start; padding:10px 12px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); }
+  .step-num { width:28px; height:28px; border-radius:50%; background:var(--bg-input); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; color:var(--gold); flex-shrink:0; }
+  .step-action { font-size:12px; font-weight:500; margin-bottom:3px; }
+  .step-action .highlight { color:var(--gold); font-weight:600; }
+  .step-materials { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:3px; }
+  .material-tag { font-size:10px; padding:1px 7px; border-radius:4px; }
+  .material-tag.glyph { background:rgba(236,72,153,.12); color:var(--glyph); }
+  .material-tag.rune { background:rgba(6,182,212,.12); color:var(--rune); }
+  .step-goal { font-size:11px; color:var(--text-secondary); }
+  .step-rate { text-align:right; flex-shrink:0; }
+  .step-rate .rate-val { font-size:14px; font-weight:700; }
+  .step-rate .rate-val.high { color:var(--success); }
+  .step-rate .rate-val.mid { color:var(--warning); }
+  .step-rate .rate-val.low { color:var(--danger); }
+  .step-rate .rate-label { font-size:10px; color:var(--text-muted); }
+
+  .update-section { margin-top:14px; padding:12px 14px; background:var(--bg-card); border-radius:var(--radius); border:1px solid var(--border); }
+  .update-section p { font-size:11px; color:var(--text-secondary); margin-bottom:8px; }
+  .update-btn { width:100%; padding:9px; background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius); color:var(--gold); font-size:12px; font-weight:600; cursor:pointer; }
+  .update-btn:hover { border-color:var(--gold); background:rgba(201,170,88,.08); }
+
+  /* ===== Equipment Picker Modal ===== */
+  .modal-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000;
+    display:none; align-items:center; justify-content:center;
+    backdrop-filter:blur(4px);
+  }
+  .modal-overlay.open { display:flex; }
+  .modal {
+    background:var(--bg-panel); border:1px solid var(--border); border-radius:var(--radius-lg);
+    width:680px; max-height:80vh; display:flex; flex-direction:column; overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  .modal-header { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .modal-header h3 { font-size:15px; font-weight:600; }
+  .modal-close { width:28px; height:28px; background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:18px; border-radius:6px; display:flex; align-items:center; justify-content:center; }
+  .modal-close:hover { color:var(--text-primary); background:rgba(255,255,255,.05); }
+  .modal-search { padding:10px 18px; border-bottom:1px solid var(--border); }
+  .modal-search input { width:100%; padding:8px 12px; background:var(--bg-input); border:1px solid var(--border); border-radius:6px; color:var(--text-primary); font-size:13px; outline:none; }
+  .modal-search input:focus { border-color:var(--border-focus); }
+  .modal-search input::placeholder { color:var(--text-muted); }
+  .modal-body { display:flex; flex:1; overflow:hidden; }
+  .modal-cats { width:140px; border-right:1px solid var(--border); overflow-y:auto; padding:8px; flex-shrink:0; }
+  .modal-cat-btn {
+    width:100%; padding:8px 10px; background:transparent; border:none; border-radius:6px;
+    color:var(--text-secondary); font-size:12px; cursor:pointer; text-align:left; transition:all .1s;
+    display:flex; align-items:center; gap:6px;
+  }
+  .modal-cat-btn:hover { background:rgba(255,255,255,.05); color:var(--text-primary); }
+  .modal-cat-btn.active { background:rgba(201,170,88,.1); color:var(--gold); font-weight:500; }
+  .modal-cat-btn .count { font-size:10px; color:var(--text-muted); margin-left:auto; }
+  .modal-items { flex:1; overflow-y:auto; padding:8px; }
+  .modal-item {
+    padding:8px 12px; border-radius:6px; cursor:pointer; font-size:13px;
+    display:flex; align-items:center; justify-content:space-between;
+    transition:background .1s;
+  }
+  .modal-item:hover { background:rgba(255,255,255,.05); }
+  .modal-item.selected { background:rgba(201,170,88,.12); color:var(--gold); }
+  .modal-item .item-name { font-weight:400; }
+  .modal-item .item-level { font-size:11px; color:var(--text-muted); }
+  .modal-empty { padding:20px; text-align:center; color:var(--text-muted); font-size:13px; }
+
+  /* Same-category hint */
+  .category-lock-hint {
+    padding:8px 12px; background:rgba(201,170,88,.06); border:1px solid rgba(201,170,88,.15);
+    border-radius:var(--radius); font-size:11px; color:var(--gold-dim); margin-bottom:14px;
+    display:none;
+  }
+  .category-lock-hint.visible { display:block; }
+
+  ::-webkit-scrollbar { width:5px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+  @media (max-width:1100px) {
+    .main { grid-template-columns:1fr; max-width:600px; }
+    .center-col { padding-top:0; order:-1; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <h1>⚒ 最后纪元 · 崇高装备打造计算器</h1>
+    <p>设定当前装备与目标装备，自动规划最优打造路径</p>
+  </header>
+
+  <div class="main">
+    <!-- Left: Current Equipment -->
+    <div class="panel current-panel">
+      <div class="panel-header">
+        <div class="icon">🛡</div>
+        <div><h2>当前装备</h2><div class="subtitle">Current Equipment</div></div>
+      </div>
+      <div class="panel-body">
+        <div class="section-label">选择装备</div>
+        <div class="equip-selector">
+          <button class="equip-btn" id="currentEquipBtn" data-side="current">
+            <span class="placeholder">点击选择装备基底…</span>
+            <span class="arrow">▼</span>
+            <span class="equip-clear" title="清除选择">×</span>
+          </button>
+        </div>
+
+        <div class="fp-section">
+          <div class="fp-row">
+            <span class="fp-label">⚡ 锻造潜能</span>
+            <input type="number" class="fp-input" id="currentFP" value="30" min="0" max="100">
+          </div>
+          <div class="fp-bar"><div class="fp-bar-fill" id="fpBar" style="width:60%"></div></div>
+        </div>
+
+        <div class="affix-section">
+          <div class="section-label">当前词缀 <span style="font-size:10px;color:var(--text-muted);font-weight:400">（可留空，掉落词缀数量随机 1-4）</span></div>
+          <div class="affix-list" id="currentAffixes">
+            <div class="affix-slot">
+              <span class="affix-type prefix">前缀</span>
+              <div class="affix-dropdown-wrap" style="position:relative;"><input type="text" class="affix-name-input" placeholder="点击选择或输入…" autocomplete="off"><div class="affix-dropdown" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:50; background:var(--bg-dark); border:1px solid var(--border); border-radius:6px; max-height:200px; overflow-y:auto; margin-top:2px;"></div></div>
+              <select class="tier-select"><option value="1">T1</option><option value="2">T2</option><option value="3">T3</option><option value="4">T4</option><option value="5">T5</option><option value="6">T6★</option><option value="7">T7★</option></select>
+              <button class="affix-remove" title="清除此词缀">×</button>
+            </div>
+            <div class="affix-slot">
+              <span class="affix-type prefix">前缀</span>
+              <div class="affix-dropdown-wrap" style="position:relative;"><input type="text" class="affix-name-input" placeholder="点击选择或输入…" autocomplete="off"><div class="affix-dropdown" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:50; background:var(--bg-dark); border:1px solid var(--border); border-radius:6px; max-height:200px; overflow-y:auto; margin-top:2px;"></div></div>
+              <select class="tier-select"><option value="1">T1</option><option value="2">T2</option><option value="3">T3</option><option value="4">T4</option><option value="5">T5</option><option value="6">T6★</option><option value="7">T7★</option></select>
+              <button class="affix-remove" title="清除此词缀">×</button>
+            </div>
+            <div class="affix-slot">
+              <span class="affix-type suffix">后缀</span>
+              <div class="affix-dropdown-wrap" style="position:relative;"><input type="text" class="affix-name-input" placeholder="点击选择或输入…" autocomplete="off"><div class="affix-dropdown" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:50; background:var(--bg-dark); border:1px solid var(--border); border-radius:6px; max-height:200px; overflow-y:auto; margin-top:2px;"></div></div>
+              <select class="tier-select"><option value="1">T1</option><option value="2">T2</option><option value="3">T3</option><option value="4">T4</option><option value="5">T5</option><option value="6">T6★</option><option value="7">T7★</option></select>
+              <button class="affix-remove" title="清除此词缀">×</button>
+            </div>
+            <div class="affix-slot">
+              <span class="affix-type suffix">后缀</span>
+              <div class="affix-dropdown-wrap" style="position:relative;"><input type="text" class="affix-name-input" placeholder="点击选择或输入…" autocomplete="off"><div class="affix-dropdown" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:50; background:var(--bg-dark); border:1px solid var(--border); border-radius:6px; max-height:200px; overflow-y:auto; margin-top:2px;"></div></div>
+              <select class="tier-select"><option value="1">T1</option><option value="2">T2</option><option value="3">T3</option><option value="4">T4</option><option value="5">T5</option><option value="6">T6★</option><option value="7">T7★</option></select>
+              <button class="affix-remove" title="清除此词缀">×</button>
+            </div>
+          </div>
+          <!-- Sealed affix slot -->
+          <div class="sealed-section">
+            <div class="sealed-label">🔒 封印词缀 <span style="font-size:10px;color:var(--text-muted);font-weight:400">（绝望雕文已封印，不可修改）</span></div>
+            <div class="affix-slot sealed-slot">
+              <span class="affix-type sealed">封印</span>
+              <div class="affix-dropdown-wrap" style="position:relative;"><input type="text" class="affix-name-input" placeholder="无封印词缀" autocomplete="off"><div class="affix-dropdown" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:50; background:var(--bg-dark); border:1px solid var(--border); border-radius:6px; max-height:200px; overflow-y:auto; margin-top:2px;"></div></div>
+              <select class="tier-select"><option value="1" selected>T1</option><option value="2">T2</option><option value="3">T3</option><option value="4">T4</option><option value="5">T5</option></select>
+              <button class="affix-remove" title="清除此词缀">×</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center -->
+    <div class="center-col">
+      <button class="calc-btn" id="calcBtn">⚒ 开始计算</button>
+      <div class="steps-panel" id="stepsPanel">
+        <div class="steps-header">
+          <h3>📋 打造步骤</h3>
+          <span style="font-size:11px;color:var(--text-muted)" id="stepCount"></span>
+        </div>
+        <div class="steps-body">
+          <div class="overall-rate" id="overallRate">
+            <div class="rate-circle mid" id="rateCircle">?</div>
+            <div class="rate-info">
+              <div class="label">整体成功率</div>
+              <div class="value" id="rateValue">—</div>
+              <div class="detail" id="rateDetail">点击计算开始</div>
+            </div>
+          </div>
+          <div class="step-list" id="stepList"></div>
+          <div class="update-section">
+            <p>💡 每步操作后，在左侧更新实际结果，然后点击下方按钮重新计算。</p>
+            <button class="update-btn" id="updateBtn">🔄 更新装备状态并重新计算</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Target Equipment -->
+    <div class="panel target-panel">
+      <div class="panel-header">
+        <div class="icon">🎯</div>
+        <div><h2>目标装备</h2><div class="subtitle">Target Equipment</div></div>
+      </div>
+      <div class="panel-body">
+        <div class="section-label">选择装备</div>
+        <div class="category-lock-hint" id="categoryLockHint">
+          🔒 目标装备必须与当前装备为同一部位类型（雕文·嫉妒限制）
+        </div>
+        <div class="equip-selector">
+          <button class="equip-btn" id="targetEquipBtn" data-side="target">
+            <span class="placeholder">请先选择左侧当前装备…</span>
+            <span class="arrow">▼</span>
+            <span class="equip-clear" title="清除选择">×</span>
+          </button>
+        </div>
+
+        <div class="affix-section">
+          <div class="section-label">目标词缀 <span style="font-size:10px;color:var(--text-muted);font-weight:400">（可留空，不需要填满）</span></div>
+          <div class="affix-list" id="targetAffixes">
+            <div class="affix-slot">
+              <span class="affix-type prefix">前缀</span>
+              <div class="affix-dropdown-wrap" style="position:relative;"><input type="text" class="affix-name-input" placeholder="点击选择或输入…" autocomplete="off"><div class="affix-dropdown" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:50; background:var(--bg-dark); border:1px solid var(--border); border-radius:6px; max-height:200px; overflow-y:auto; margin-top:2px;"></div></div>
+              <select class="tier-select"><option value="1">T1</option><option value="2">T2</option><option value="3">T3</option><option value="4">T4</option><option value="5">T5</option><option value="6">T6★</option><option value="7">T7★</option></select>
+              <button class="affix-remove" title="清除此词缀">×</button>
+            </div>
+            <div class="affix-slot">
+              <span class="affix-type prefix">前缀</span>
+              <div class="affix-dropdown-wrap" style="position:relative;"><input type="text" class="affix-name-input" placeholder="点击选择或输入…" autocomplete="off"><div class="affix-dropdown" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:50; background:var(--bg-dark); border:1px solid var(--border); border-radius:6px; max-height:200px; overflow-y:auto; margin-top:2px;"></div></div>
+              <select class="tier-select"><option value="1">T1</option><option value="2">T2</option><option value="3">T3</option><option value="4">T4</option><option value="5">T5</option><option value="6">T6★</option><option value="7">T7★</option></select>
+              <button class="affix-remove" title="清除此词缀">×</button>
+            </div>
+            <div class="affix-slot">
+              <span class="affix-type suffix">后缀</span>
+              <div class="affix-dropdown-wrap" style="position:relative;"><input type="text" class="affix-name-input" placeholder="点击选择或输入…" autocomplete="off"><div class="affix-dropdown" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:50; background:var(--bg-dark); border:1px solid var(--border); border-radius:6px; max-height:200px; overflow-y:auto; margin-top:2px;"></div></div>
+              <select class="tier-select"><option value="1">T1</option><option value="2">T2</option><option value="3">T3</option><option value="4">T4</option><option value="5">T5</option><option value="6">T6★</option><option value="7">T7★</option></select>
+              <button class="affix-remove" title="清除此词缀">×</button>
+            </div>
+            <div class="affix-slot">
+              <span class="affix-type suffix">后缀</span>
+              <div class="affix-dropdown-wrap" style="position:relative;"><input type="text" class="affix-name-input" placeholder="点击选择或输入…" autocomplete="off"><div class="affix-dropdown" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:50; background:var(--bg-dark); border:1px solid var(--border); border-radius:6px; max-height:200px; overflow-y:auto; margin-top:2px;"></div></div>
+              <select class="tier-select"><option value="1">T1</option><option value="2">T2</option><option value="3">T3</option><option value="4">T4</option><option value="5">T5</option><option value="6">T6★</option><option value="7">T7★</option></select>
+              <button class="affix-remove" title="清除此词缀">×</button>
+            </div>
+          </div>
+          <!-- Sealed affix slot (Glyph of Despair) -->
+          <div class="sealed-section">
+            <div class="sealed-label">🔒 封印词缀 <span style="font-size:10px;color:var(--text-muted);font-weight:400">（绝望雕文封印，不可修改/剥离/升级）</span></div>
+            <div class="affix-slot sealed-slot">
+              <span class="affix-type sealed">封印</span>
+              <div class="affix-dropdown-wrap" style="position:relative;"><input type="text" class="affix-name-input" placeholder="无封印词缀" autocomplete="off"><div class="affix-dropdown" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:50; background:var(--bg-dark); border:1px solid var(--border); border-radius:6px; max-height:200px; overflow-y:auto; margin-top:2px;"></div></div>
+              <select class="tier-select"><option value="1">T1</option><option value="2">T2</option><option value="3">T3</option><option value="4">T4</option><option value="5">T5</option><option value="6">T6★</option><option value="7">T7★</option></select>
+              <button class="affix-remove" title="清除此词缀">×</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Equipment Picker Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">选择装备</h3>
+      <button class="modal-close" id="modalClose">×</button>
+    </div>
+    <div class="modal-search">
+      <input type="text" id="modalSearch" placeholder="搜索装备名称…">
+    </div>
+    <div class="modal-body">
+      <div class="modal-cats" id="modalCats"></div>
+      <div class="modal-items" id="modalItems"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const AFFIX_DATA = {"头盔":{"prefix":[{"id":21,"name":"暴风打击法术伤害","maxTier":8},{"id":34,"name":"魔力","maxTier":8},{"id":53,"name":"伤害由魔力优先承受而非生命","maxTier":8},{"id":70,"name":"召唤物生命","maxTier":8},{"id":71,"name":"召唤物躲避值","maxTier":8},{"id":73,"name":"召唤物生命再生","maxTier":8},{"id":331,"name":"魔力","maxTier":8},{"id":334,"name":"图腾法术伤害","maxTier":8},{"id":335,"name":"提高变形期间冷却恢复速度","maxTier":8},{"id":336,"name":"召唤物暴击伤害加成","maxTier":8},{"id":337,"name":"召唤物法术暴击几率","maxTier":8},{"id":338,"name":"变形期间暴击伤害加成","maxTier":8},{"id":339,"name":"冻伤冰霜抗性穿透","maxTier":8},{"id":341,"name":"每层冰缓冻结率","maxTier":8},{"id":342,"name":"图腾施法速度","maxTier":8},{"id":346,"name":"召唤物近战伤害转化为生命偷取","maxTier":8},{"id":347,"name":"召唤物击中时施加流血几率","maxTier":8},{"id":349,"name":"变形期间近战伤害","maxTier":8},{"id":350,"name":"变形期间法术伤害","maxTier":8},{"id":351,"name":"变形期间持续伤害","maxTier":8},{"id":352,"name":"图腾暴击几率","maxTier":8},{"id":353,"name":"提高鲨鱼之势效果","maxTier":8},{"id":354,"name":"提高野猪之势持续时间","maxTier":8},{"id":355,"name":"提高毒蛇之势效果","maxTier":8},{"id":356,"name":"提高猞猁之势效果","maxTier":8},{"id":357,"name":"图腾伤害","maxTier":8},{"id":358,"name":"流血物理抗性穿透","maxTier":8},{"id":359,"name":"持剑时近战物理伤害","maxTier":8},{"id":363,"name":"持斧击中时施加流血几率","maxTier":8},{"id":364,"name":"持锤时近战物理伤害","maxTier":8},{"id":365,"name":"承受虚空伤害转化为物理伤害","maxTier":8},{"id":366,"name":"承受腐化伤害转化为物理伤害","maxTier":8},{"id":367,"name":"承受毒素伤害转化为物理伤害","maxTier":8},{"id":368,"name":"投掷攻击暴击几率","maxTier":8},{"id":369,"name":"引导消耗","maxTier":8},{"id":370,"name":"提高护甲粉碎效果","maxTier":8},{"id":371,"name":"火焰持续伤害","maxTier":8},{"id":372,"name":"虚空持续伤害","maxTier":8},{"id":373,"name":"提高技能回响伤害","maxTier":8},{"id":374,"name":"提高深渊腐朽持续时间","maxTier":8},{"id":376,"name":"撕裂击中敌人时恢复魔力","maxTier":8},{"id":377,"name":"直接施放惩戒时恢复魔力","maxTier":8},{"id":378,"name":"提高飞锤投掷伤害","maxTier":8},{"id":379,"name":"提高盾牌投掷暴击几率","maxTier":8},{"id":380,"name":"提高熔炉之怒伤害","maxTier":8},{"id":381,"name":"提高法术暴击几率（最大魔力超过300时翻倍）","maxTier":8},{"id":383,"name":"引导期间法术伤害","maxTier":8},{"id":384,"name":"召唤物冻结率加成","maxTier":8},{"id":385,"name":"闪电技能暴击伤害加成","maxTier":8},{"id":386,"name":"引导期间法术伤害转化为生命偷取","maxTier":8},{"id":387,"name":"冰霜技能击中时施加冻伤几率","maxTier":8},{"id":388,"name":"冰霜持续伤害","maxTier":8},{"id":389,"name":"火焰持续伤害","maxTier":8},{"id":390,"name":"近战元素伤害","maxTier":8},{"id":391,"name":"点燃几率于火焰技能击中时","maxTier":8},{"id":392,"name":"闪电技能击中时施加感电几率","maxTier":8},{"id":393,"name":"暴击时施放火焰光环几率（每秒至多3次）","maxTier":8},{"id":394,"name":"提高火焰光环伤害","maxTier":8},{"id":396,"name":"几率施放火焰光环于被击中时（每秒至多3次）","maxTier":8},{"id":398,"name":"火焰技能击杀时施放火焰光环几率（每秒至多3次）","maxTier":8},{"id":399,"name":"近战击中时施加火花电荷几率","maxTier":8},{"id":400,"name":"魔力消耗转化为能量护盾","maxTier":8},{"id":401,"name":"变形期间物理伤害","maxTier":8},{"id":402,"name":"变形期间腐化伤害","maxTier":8},{"id":410,"name":"提高骷髅法师伤害","maxTier":8},{"id":412,"name":"收割伤害转化为生命偷取","maxTier":8},{"id":413,"name":"召唤物承受伤害反射到至攻击者","maxTier":8},{"id":415,"name":"饥渴灵魂击杀时获得20点能量护盾几率","maxTier":8},{"id":420,"name":"每个骷髅法师使提高法术伤害","maxTier":8},{"id":421,"name":"击中时施加咒蚀几率","maxTier":8},{"id":422,"name":"变形期间伤害转化为生命偷取","maxTier":8},{"id":423,"name":"降低法术生命消耗","maxTier":8},{"id":424,"name":"物理法术暴击几率","maxTier":8},{"id":435,"name":"施放血肉转移时施放骨刺几率","maxTier":8},{"id":437,"name":"生成影子时获得能量护盾","maxTier":8},{"id":439,"name":"提高影子攻击伤害","maxTier":8},{"id":440,"name":"伤害偏斜时恢复生命","maxTier":8},{"id":442,"name":"被击中后使躲避值","maxTier":8},{"id":448,"name":"每装备一把匕首提高暴击几率","maxTier":8},{"id":453,"name":"每装备一把匕首使毒素几率","maxTier":8},{"id":457,"name":"双持时增加物理投掷伤害","maxTier":8},{"id":459,"name":"持剑时提高伤害","maxTier":8},{"id":461,"name":"持匕首时提高伤害","maxTier":8},{"id":463,"name":"持弓时提高伤害","maxTier":8},{"id":468,"name":"点燃火焰抗性穿透","maxTier":8},{"id":469,"name":"提高中毒持续时间","maxTier":8},{"id":471,"name":"投掷物理伤害","maxTier":8},{"id":477,"name":"弓击中时粉碎护甲几率","maxTier":8},{"id":481,"name":"提高护甲粉碎持续时间","maxTier":8},{"id":483,"name":"弓箭击中时施加点燃几率","maxTier":8},{"id":485,"name":"弓箭击中时施加点燃几率","maxTier":8},{"id":487,"name":"暗影匕首物理抗性穿透","maxTier":8},{"id":489,"name":"弓箭元素伤害","maxTier":8},{"id":494,"name":"弓箭击中时施加流血几率","maxTier":8},{"id":496,"name":"提高灰烬打击第一击范围","maxTier":8},{"id":498,"name":"提高乱舞暴击几率","maxTier":8},{"id":501,"name":"力量","maxTier":8},{"id":502,"name":"智力","maxTier":8},{"id":503,"name":"敏捷","maxTier":8},{"id":504,"name":"协调","maxTier":8},{"id":505,"name":"活力","maxTier":8},{"id":509,"name":"提高爆炸箭矢范围","maxTier":8},{"id":511,"name":"每支箭矢使多重射击提高伤害","maxTier":8},{"id":513,"name":"提高箭雨持续时间","maxTier":8},{"id":515,"name":"每个激活影子使暗影圆舞斩提高伤害","maxTier":8},{"id":517,"name":"手里剑击中时施加流血几率","maxTier":8},{"id":521,"name":"提高酸液瓶范围","maxTier":8},{"id":524,"name":"提高影舞打击范围","maxTier":8},{"id":526,"name":"同步打击魔力效率","maxTier":8},{"id":528,"name":"诱饵魔力效率","maxTier":8},{"id":530,"name":"施放烟雾弹时获得能量护盾","maxTier":8},{"id":532,"name":"施放瞬影时获得能量护盾","maxTier":8},{"id":648,"name":"风暴乌鸦法术伤害","maxTier":8},{"id":655,"name":"标枪投掷增加闪电投掷伤害","maxTier":8},{"id":666,"name":"提高藤蔓攻击与施法速度","maxTier":8},{"id":688,"name":"提高烈焰冲刺的速度和距离","maxTier":8},{"id":690,"name":"几率在直接施放符文箭或火球时获得20法力","maxTier":8},{"id":691,"name":"符文乞灵每消耗一个符文所获得的护盾","maxTier":8},{"id":737,"name":"集结风暴击中敌人时获得风暴堆叠几率","maxTier":8},{"id":747,"name":"直接施放混沌箭时额外发射3枚射弹几率","maxTier":8},{"id":749,"name":"诅咒法术伤害","maxTier":8},{"id":762,"name":"追心箭反曲几率","maxTier":8},{"id":764,"name":"闪电技能击中时施加触电几率","maxTier":8},{"id":765,"name":"虚空技能击中时施加时间腐朽几率","maxTier":8},{"id":332,"name":"护甲与召唤物护甲","maxTier":8},{"id":333,"name":"共享·闪电伤害","maxTier":8},{"id":340,"name":"共享·冰霜伤害","maxTier":8},{"id":343,"name":"共享·流血持续时间","maxTier":8},{"id":344,"name":"共享·提高法术伤害","maxTier":8},{"id":345,"name":"共享·提高近战伤害","maxTier":8},{"id":360,"name":"提高物理伤害与流血持续时间","maxTier":8},{"id":361,"name":"提高火焰伤害与点燃持续时间","maxTier":8},{"id":362,"name":"提高虚空伤害与增加法术虚空伤害","maxTier":8},{"id":404,"name":"共享·提高火焰伤害","maxTier":8},{"id":405,"name":"共享·提高腐化伤害","maxTier":8},{"id":406,"name":"共享·击中时施加流血几率","maxTier":8},{"id":407,"name":"共享·提高流血持续时间","maxTier":8},{"id":408,"name":"共享·流血物理抗性穿透","maxTier":8},{"id":409,"name":"共享·物理伤害转化为生命偷取","maxTier":8},{"id":414,"name":"毒素伤害与毒素抗性","maxTier":8},{"id":416,"name":"提高你与你的召唤物暴击几率","maxTier":8},{"id":418,"name":"提高血液剥离与鲜血飞溅伤害","maxTier":8},{"id":419,"name":"骷髅与骷髅法师暴击几率","maxTier":8},{"id":519,"name":"手里剑闪电伤害","maxTier":8},{"id":540,"name":"召唤野狼等级","maxTier":8},{"id":543,"name":"召唤荆棘图腾等级","maxTier":8},{"id":544,"name":"召唤树人等级","maxTier":8},{"id":546,"name":"元素新星等级","maxTier":8},{"id":548,"name":"火球术穿透几率","maxTier":8},{"id":552,"name":"传送等级","maxTier":8},{"id":555,"name":"召唤野熊等级","maxTier":8},{"id":556,"name":"静电球等级","maxTier":8},{"id":557,"name":"闪电冲击等级","maxTier":8},{"id":559,"name":"根须纠缠等级","maxTier":8},{"id":560,"name":"放逐等级","maxTier":8},{"id":562,"name":"吞噬球等级","maxTier":8},{"id":566,"name":"时间回溯等级","maxTier":8},{"id":569,"name":"复仇等级","maxTier":8},{"id":570,"name":"盾牌投掷等级","maxTier":8},{"id":575,"name":"专注等级","maxTier":8},{"id":577,"name":"饥渴灵魂等级","maxTier":8},{"id":578,"name":"血液剥离等级","maxTier":8},{"id":580,"name":"召唤白骨魔像等级","maxTier":8},{"id":582,"name":"骨刺等级","maxTier":8},{"id":585,"name":"召唤风暴图腾等级","maxTier":8},{"id":592,"name":"环形盾阵等级","maxTier":8},{"id":598,"name":"附魔武器等级","maxTier":8},{"id":602,"name":"熊人形态等级","maxTier":8},{"id":604,"name":"显化铠甲等级","maxTier":8},{"id":611,"name":"手里剑等级","maxTier":8},{"id":613,"name":"多重射击等级","maxTier":8},{"id":614,"name":"穿刺等级","maxTier":8},{"id":615,"name":"诱饵等级","maxTier":8},{"id":620,"name":"同步打击等级","maxTier":8},{"id":629,"name":"地震等级","maxTier":8},{"id":631,"name":"熔炉之怒等级","maxTier":8},{"id":634,"name":"精神瘟疫等级","maxTier":8},{"id":636,"name":"死亡封印等级","maxTier":8},{"id":638,"name":"黑暗箭袋等级","maxTier":8},{"id":647,"name":"召唤自爆僵尸等级","maxTier":8},{"id":681,"name":"符文箭等级","maxTier":8},{"id":682,"name":"符文乞灵等级","maxTier":8},{"id":693,"name":"火焰乞灵的穿透","maxTier":8},{"id":694,"name":"寒冷乞灵的穿透","maxTier":8},{"id":695,"name":"冰霜墙持续时长和冻伤几率","maxTier":8},{"id":696,"name":"闪电乞灵的穿透","maxTier":8},{"id":726,"name":"治愈之手等级","maxTier":8},{"id":727,"name":"驯鹰术等级","maxTier":8},{"id":734,"name":"混沌箭等级","maxTier":8},{"id":735,"name":"鬼焰等级","maxTier":8},{"id":739,"name":"俯冲轰炸伤害与范围","maxTier":8},{"id":1090,"name":"剑刃风暴等级","maxTier":8}],"suffix":[{"id":1,"name":"护甲","maxTier":8},{"id":7,"name":"虚空抗性","maxTier":8},{"id":8,"name":"躲避值","maxTier":8},{"id":10,"name":"腐化抗性","maxTier":8},{"id":13,"name":"火焰抗性","maxTier":8},{"id":17,"name":"冰霜抗性","maxTier":8},{"id":19,"name":"毒素抗性","maxTier":8},{"id":22,"name":"生命再生","maxTier":8},{"id":24,"name":"闪电抗性","maxTier":8},{"id":25,"name":"生命","maxTier":8},{"id":31,"name":"护甲","maxTier":8},{"id":45,"name":"物理抗性","maxTier":8},{"id":52,"name":"生命","maxTier":8},{"id":80,"name":"元素抗性","maxTier":8},{"id":90,"name":"每秒生命再生","maxTier":8},{"id":92,"name":"耐伤","maxTier":8},{"id":382,"name":"每秒获得能量护盾","maxTier":8},{"id":97,"name":"暴击避免与增加躲避值","maxTier":8},{"id":715,"name":"护甲与降低承受暴击额外伤害","maxTier":8}]},"胸甲":{"prefix":[{"id":34,"name":"魔力","maxTier":8},{"id":53,"name":"伤害由魔力优先承受而非生命","maxTier":8},{"id":70,"name":"召唤物生命","maxTier":8},{"id":95,"name":"伤害反射至攻击者","maxTier":8},{"id":96,"name":"伤害反射","maxTier":8},{"id":331,"name":"魔力","maxTier":8},{"id":334,"name":"图腾法术伤害","maxTier":8},{"id":336,"name":"召唤物暴击伤害加成","maxTier":8},{"id":337,"name":"召唤物法术暴击几率","maxTier":8},{"id":338,"name":"变形期间暴击伤害加成","maxTier":8},{"id":339,"name":"冻伤冰霜抗性穿透","maxTier":8},{"id":341,"name":"每层冰缓冻结率","maxTier":8},{"id":342,"name":"图腾施法速度","maxTier":8},{"id":346,"name":"召唤物近战伤害转化为生命偷取","maxTier":8},{"id":347,"name":"召唤物击中时施加流血几率","maxTier":8},{"id":348,"name":"召唤物近战暴击几率","maxTier":8},{"id":349,"name":"变形期间近战伤害","maxTier":8},{"id":350,"name":"变形期间法术伤害","maxTier":8},{"id":351,"name":"变形期间持续伤害","maxTier":8},{"id":352,"name":"图腾暴击几率","maxTier":8},{"id":353,"name":"提高鲨鱼之势效果","maxTier":8},{"id":354,"name":"提高野猪之势持续时间","maxTier":8},{"id":355,"name":"提高毒蛇之势效果","maxTier":8},{"id":356,"name":"提高猞猁之势效果","maxTier":8},{"id":357,"name":"图腾伤害","maxTier":8},{"id":358,"name":"流血物理抗性穿透","maxTier":8},{"id":359,"name":"持剑时近战物理伤害","maxTier":8},{"id":363,"name":"持斧击中时施加流血几率","maxTier":8},{"id":364,"name":"持锤时近战物理伤害","maxTier":8},{"id":365,"name":"承受虚空伤害转化为物理伤害","maxTier":8},{"id":366,"name":"承受腐化伤害转化为物理伤害","maxTier":8},{"id":367,"name":"承受毒素伤害转化为物理伤害","maxTier":8},{"id":368,"name":"投掷攻击暴击几率","maxTier":8},{"id":370,"name":"提高护甲粉碎效果","maxTier":8},{"id":371,"name":"火焰持续伤害","maxTier":8},{"id":372,"name":"虚空持续伤害","maxTier":8},{"id":373,"name":"提高技能回响伤害","maxTier":8},{"id":374,"name":"提高深渊腐朽持续时间","maxTier":8},{"id":375,"name":"复仇击中敌人时恢复魔力","maxTier":8},{"id":378,"name":"提高飞锤投掷伤害","maxTier":8},{"id":379,"name":"提高盾牌投掷暴击几率","maxTier":8},{"id":380,"name":"提高熔炉之怒伤害","maxTier":8},{"id":381,"name":"提高法术暴击几率（最大魔力超过300时翻倍）","maxTier":8},{"id":383,"name":"引导期间法术伤害","maxTier":8},{"id":384,"name":"召唤物冻结率加成","maxTier":8},{"id":385,"name":"闪电技能暴击伤害加成","maxTier":8},{"id":386,"name":"引导期间法术伤害转化为生命偷取","maxTier":8},{"id":387,"name":"冰霜技能击中时施加冻伤几率","maxTier":8},{"id":388,"name":"冰霜持续伤害","maxTier":8},{"id":389,"name":"火焰持续伤害","maxTier":8},{"id":390,"name":"近战元素伤害","maxTier":8},{"id":391,"name":"点燃几率于火焰技能击中时","maxTier":8},{"id":392,"name":"闪电技能击中时施加感电几率","maxTier":8},{"id":393,"name":"暴击时施放火焰光环几率（每秒至多3次）","maxTier":8},{"id":394,"name":"提高火焰光环伤害","maxTier":8},{"id":395,"name":"被击中时获得闪电庇护几率","maxTier":8},{"id":396,"name":"几率施放火焰光环于被击中时（每秒至多3次）","maxTier":8},{"id":398,"name":"火焰技能击杀时施放火焰光环几率（每秒至多3次）","maxTier":8},{"id":400,"name":"魔力消耗转化为能量护盾","maxTier":8},{"id":401,"name":"变形期间物理伤害","maxTier":8},{"id":402,"name":"变形期间腐化伤害","maxTier":8},{"id":410,"name":"提高骷髅法师伤害","maxTier":8},{"id":411,"name":"施放收割时恢复魔力","maxTier":8},{"id":412,"name":"收割伤害转化为生命偷取","maxTier":8},{"id":413,"name":"召唤物承受伤害反射到至攻击者","maxTier":8},{"id":415,"name":"饥渴灵魂击杀时获得20点能量护盾几率","maxTier":8},{"id":417,"name":"骨刺对流血敌人持续伤害总增","maxTier":8},{"id":420,"name":"每个骷髅法师使提高法术伤害","maxTier":8},{"id":421,"name":"击中时施加咒蚀几率","maxTier":8},{"id":422,"name":"变形期间伤害转化为生命偷取","maxTier":8},{"id":424,"name":"物理法术暴击几率","maxTier":8},{"id":435,"name":"施放血肉转移时施放骨刺几率","maxTier":8},{"id":437,"name":"生成影子时获得能量护盾","maxTier":8},{"id":439,"name":"提高影子攻击伤害","maxTier":8},{"id":440,"name":"伤害偏斜时恢复生命","maxTier":8},{"id":442,"name":"被击中后使躲避值","maxTier":8},{"id":443,"name":"近战击中时获得猩红帷幕几率","maxTier":8},{"id":446,"name":"每装备一把剑提高暴击几率","maxTier":8},{"id":449,"name":"被击中时获得暮色帷幕几率","maxTier":8},{"id":451,"name":"每装备一把剑使流血几率","maxTier":8},{"id":454,"name":"近战击中时获得暮色帷幕几率","maxTier":8},{"id":459,"name":"持剑时提高伤害","maxTier":8},{"id":461,"name":"持匕首时提高伤害","maxTier":8},{"id":463,"name":"持弓时提高伤害","maxTier":8},{"id":468,"name":"点燃火焰抗性穿透","maxTier":8},{"id":471,"name":"投掷物理伤害","maxTier":8},{"id":473,"name":"几率粉碎护甲于投掷攻击击中时","maxTier":8},{"id":475,"name":"几率粉碎护甲于近战击中时","maxTier":8},{"id":479,"name":"提高护甲粉碎效果","maxTier":8},{"id":487,"name":"暗影匕首物理抗性穿透","maxTier":8},{"id":494,"name":"弓箭击中时施加流血几率","maxTier":8},{"id":498,"name":"提高乱舞暴击几率","maxTier":8},{"id":500,"name":"穿刺物理抗性穿透","maxTier":8},{"id":501,"name":"力量","maxTier":8},{"id":502,"name":"智力","maxTier":8},{"id":503,"name":"敏捷","maxTier":8},{"id":504,"name":"协调","maxTier":8},{"id":505,"name":"活力","maxTier":8},{"id":509,"name":"提高爆炸箭矢范围","maxTier":8},{"id":511,"name":"每支箭矢使多重射击提高伤害","maxTier":8},{"id":515,"name":"每个激活影子使暗影圆舞斩提高伤害","maxTier":8},{"id":517,"name":"手里剑击中时施加流血几率","maxTier":8},{"id":521,"name":"提高酸液瓶范围","maxTier":8},{"id":526,"name":"同步打击魔力效率","maxTier":8},{"id":528,"name":"诱饵魔力效率","maxTier":8},{"id":530,"name":"施放烟雾弹时获得能量护盾","maxTier":8},{"id":532,"name":"施放瞬影时获得能量护盾","maxTier":8},{"id":656,"name":"引导旋风斩期间耐伤","maxTier":8},{"id":663,"name":"蝗虫护甲粉碎几率","maxTier":8},{"id":665,"name":"裂地猛击击中时生成震波几率","maxTier":8},{"id":667,"name":"狂暴暴击几率","maxTier":8},{"id":687,"name":"站在你的统治铭文上时, 你或你的盟友每秒获得的护盾","maxTier":8},{"id":691,"name":"符文乞灵每消耗一个符文所获得的护盾","maxTier":8},{"id":748,"name":"提高冥府裂缝灵体频率","maxTier":8},{"id":762,"name":"追心箭反曲几率","maxTier":8},{"id":764,"name":"闪电技能击中时施加触电几率","maxTier":8},{"id":765,"name":"虚空技能击中时施加时间腐朽几率","maxTier":8},{"id":192,"name":"+1骷髅上限与提高骷髅伤害","maxTier":8},{"id":332,"name":"护甲与召唤物护甲","maxTier":8},{"id":333,"name":"共享·闪电伤害","maxTier":8},{"id":340,"name":"共享·冰霜伤害","maxTier":8},{"id":343,"name":"共享·流血持续时间","maxTier":8},{"id":344,"name":"共享·提高法术伤害","maxTier":8},{"id":345,"name":"共享·提高近战伤害","maxTier":8},{"id":360,"name":"提高物理伤害与流血持续时间","maxTier":8},{"id":361,"name":"提高火焰伤害与点燃持续时间","maxTier":8},{"id":362,"name":"提高虚空伤害与增加法术虚空伤害","maxTier":8},{"id":397,"name":"火焰护盾充能与增加能量护盾","maxTier":8},{"id":404,"name":"共享·提高火焰伤害","maxTier":8},{"id":405,"name":"共享·提高腐化伤害","maxTier":8},{"id":406,"name":"共享·击中时施加流血几率","maxTier":8},{"id":407,"name":"共享·提高流血持续时间","maxTier":8},{"id":408,"name":"共享·流血物理抗性穿透","maxTier":8},{"id":409,"name":"共享·物理伤害转化为生命偷取","maxTier":8},{"id":414,"name":"毒素伤害与毒素抗性","maxTier":8},{"id":416,"name":"提高你与你的召唤物暴击几率","maxTier":8},{"id":418,"name":"提高血液剥离与鲜血飞溅伤害","maxTier":8},{"id":419,"name":"骷髅与骷髅法师暴击几率","maxTier":8},{"id":519,"name":"手里剑闪电伤害","maxTier":8},{"id":534,"name":"黑暗箭袋掉落黑暗箭矢数量与提高弓箭伤害","maxTier":8},{"id":536,"name":"弩炮上限与提高弩炮攻击速度","maxTier":8},{"id":537,"name":"致命幻影的幻影数量与魔力效率","maxTier":8},{"id":541,"name":"龙卷风等级","maxTier":8},{"id":547,"name":"魔力打击等级","maxTier":8},{"id":549,"name":"火球术等级","maxTier":8},{"id":550,"name":"冰川等级","maxTier":8},{"id":551,"name":"陨石等级","maxTier":8},{"id":561,"name":"旋风斩等级","maxTier":8},{"id":563,"name":"撕裂等级","maxTier":8},{"id":565,"name":"盾牌冲锋等级","maxTier":8},{"id":567,"name":"深渊回响等级","maxTier":8},{"id":568,"name":"抹消打击等级","maxTier":8},{"id":571,"name":"恐惧幽影等级","maxTier":8},{"id":572,"name":"召唤骷髅等级","maxTier":8},{"id":574,"name":"牺牲等级","maxTier":8},{"id":579,"name":"召唤幽灵等级","maxTier":8},{"id":581,"name":"漫游灵体等级","maxTier":8},{"id":584,"name":"烈焰掠夺等级","maxTier":8},{"id":586,"name":"灵魂盛宴等级","maxTier":8},{"id":588,"name":"冲锋等级","maxTier":8},{"id":593,"name":"火焰烙印等级","maxTier":8},{"id":595,"name":"伊泰拉的祝福等级","maxTier":8},{"id":597,"name":"碎冰打击等级","maxTier":8},{"id":605,"name":"锻造打击等级","maxTier":8},{"id":607,"name":"死神形态等级","maxTier":8},{"id":608,"name":"酸液瓶等级","maxTier":8},{"id":609,"name":"暗影圆舞斩等级","maxTier":8},{"id":617,"name":"爆炸箭矢等级","maxTier":8},{"id":618,"name":"箭雨等级","maxTier":8},{"id":619,"name":"瞬影等级","maxTier":8},{"id":621,"name":"暴风打击等级","maxTier":8},{"id":622,"name":"集结风暴等级","maxTier":8},{"id":626,"name":"漩涡等级","maxTier":8},{"id":627,"name":"召唤迅猛龙等级","maxTier":8},{"id":630,"name":"奥术升华等级","maxTier":8},{"id":632,"name":"吸取生命等级","maxTier":8},{"id":637,"name":"寒冰弹幕等级","maxTier":8},{"id":642,"name":"烟雾弹等级","maxTier":8},{"id":646,"name":"召唤风暴乌鸦等级","maxTier":8},{"id":649,"name":"自爆僵尸速度与伤害","maxTier":8},{"id":652,"name":"多重打击等级","maxTier":8},{"id":660,"name":"虫群之刃形态等级","maxTier":8},{"id":661,"name":"裂地猛击等级","maxTier":8},{"id":680,"name":"烈焰冲刺等级","maxTier":8},{"id":693,"name":"火焰乞灵的穿透","maxTier":8},{"id":694,"name":"寒冷乞灵的穿透","maxTier":8},{"id":695,"name":"冰霜墙持续时长和冻伤几率","maxTier":8},{"id":696,"name":"闪电乞灵的穿透","maxTier":8},{"id":728,"name":"俯冲轰炸等级","maxTier":8},{"id":729,"name":"爆炸陷阱等级","maxTier":8},{"id":733,"name":"冥府裂缝等级","maxTier":8},{"id":761,"name":"追心箭等级","maxTier":8},{"id":944,"name":"剥皮等级","maxTier":8},{"id":1110,"name":"盾牌投掷转化为虚空","maxTier":8}],"suffix":[{"id":1,"name":"护甲","maxTier":8},{"id":7,"name":"虚空抗性","maxTier":8},{"id":8,"name":"躲避值","maxTier":8},{"id":10,"name":"腐化抗性","maxTier":8},{"id":13,"name":"火焰抗性","maxTier":8},{"id":17,"name":"冰霜抗性","maxTier":8},{"id":19,"name":"毒素抗性","maxTier":8},{"id":22,"name":"生命再生","maxTier":8},{"id":24,"name":"闪电抗性","maxTier":8},{"id":25,"name":"生命","maxTier":8},{"id":31,"name":"护甲","maxTier":8},{"id":45,"name":"物理抗性","maxTier":8},{"id":52,"name":"生命","maxTier":8},{"id":59,"name":"躲避值","maxTier":8},{"id":80,"name":"元素抗性","maxTier":8},{"id":382,"name":"每秒获得能量护盾","maxTier":8},{"id":715,"name":"护甲与降低承受暴击额外伤害","maxTier":8}]},"腰带":{"prefix":[{"id":12,"name":"火焰伤害","maxTier":8},{"id":15,"name":"虚空伤害","maxTier":8},{"id":16,"name":"冰霜伤害","maxTier":8},{"id":18,"name":"腐化伤害","maxTier":8},{"id":23,"name":"闪电伤害","maxTier":8},{"id":26,"name":"召唤物伤害","maxTier":8},{"id":30,"name":"物理伤害","maxTier":8},{"id":61,"name":"毒素伤害","maxTier":8},{"id":65,"name":"提高发现药剂几率","maxTier":8},{"id":66,"name":"使用药剂时获得能量护盾","maxTier":8},{"id":70,"name":"召唤物生命","maxTier":8},{"id":73,"name":"召唤物生命再生","maxTier":8},{"id":83,"name":"药剂恢复生命转化为能量护盾","maxTier":8},{"id":88,"name":"投掷伤害","maxTier":8},{"id":100,"name":"元素持续伤害","maxTier":8},{"id":330,"name":"魔力再生","maxTier":8},{"id":67,"name":"冻结率与使用药剂时施放冰冻凝结","maxTier":8},{"id":75,"name":"使用药剂时获得能量护盾并净化异常状态","maxTier":8},{"id":82,"name":"额外药剂栏位与药剂恢复生命","maxTier":8}],"suffix":[{"id":7,"name":"虚空抗性","maxTier":8},{"id":8,"name":"躲避值","maxTier":8},{"id":10,"name":"腐化抗性","maxTier":8},{"id":13,"name":"火焰抗性","maxTier":8},{"id":17,"name":"冰霜抗性","maxTier":8},{"id":19,"name":"毒素抗性","maxTier":8},{"id":22,"name":"生命再生","maxTier":8},{"id":24,"name":"闪电抗性","maxTier":8},{"id":25,"name":"生命","maxTier":8},{"id":27,"name":"提高冷却恢复速度","maxTier":8},{"id":45,"name":"物理抗性","maxTier":8},{"id":52,"name":"生命","maxTier":8},{"id":59,"name":"躲避值","maxTier":8},{"id":80,"name":"元素抗性","maxTier":8},{"id":92,"name":"耐伤","maxTier":8},{"id":425,"name":"耐伤阈值","maxTier":8},{"id":29,"name":"生命与晕眩避免","maxTier":8},{"id":36,"name":"复合生命","maxTier":8},{"id":97,"name":"暴击避免与增加躲避值","maxTier":8},{"id":715,"name":"护甲与降低承受暴击额外伤害","maxTier":8}]},"靴子":{"prefix":[{"id":28,"name":"移动速度","maxTier":8},{"id":71,"name":"召唤物躲避值","maxTier":8},{"id":501,"name":"力量","maxTier":8},{"id":502,"name":"智力","maxTier":8},{"id":503,"name":"敏捷","maxTier":8},{"id":504,"name":"协调","maxTier":8},{"id":505,"name":"活力","maxTier":8}],"suffix":[{"id":1,"name":"护甲","maxTier":8},{"id":7,"name":"虚空抗性","maxTier":8},{"id":8,"name":"躲避值","maxTier":8},{"id":10,"name":"腐化抗性","maxTier":8},{"id":13,"name":"火焰抗性","maxTier":8},{"id":17,"name":"冰霜抗性","maxTier":8},{"id":19,"name":"毒素抗性","maxTier":8},{"id":24,"name":"闪电抗性","maxTier":8},{"id":25,"name":"生命","maxTier":8},{"id":27,"name":"提高冷却恢复速度","maxTier":8},{"id":31,"name":"护甲","maxTier":8},{"id":45,"name":"物理抗性","maxTier":8},{"id":80,"name":"元素抗性","maxTier":8},{"id":36,"name":"复合生命","maxTier":8},{"id":97,"name":"暴击避免与增加躲避值","maxTier":8},{"id":715,"name":"护甲与降低承受暴击额外伤害","maxTier":8},{"id":760,"name":"闪避时躲避与提高躲避值","maxTier":8}]},"手套":{"prefix":[{"id":2,"name":"近战攻击速度","maxTier":8},{"id":4,"name":"施法速度","maxTier":8},{"id":5,"name":"暴击几率","maxTier":8},{"id":26,"name":"召唤物伤害","maxTier":8},{"id":34,"name":"魔力","maxTier":8},{"id":66,"name":"使用药剂时获得能量护盾","maxTier":8},{"id":69,"name":"近战伤害转化为生命偷取","maxTier":8},{"id":70,"name":"召唤物生命","maxTier":8},{"id":72,"name":"持续伤害","maxTier":8},{"id":83,"name":"药剂恢复生命转化为能量护盾","maxTier":8},{"id":87,"name":"投掷攻击速度","maxTier":8},{"id":88,"name":"投掷伤害","maxTier":8},{"id":101,"name":"提高范围技能的范围","maxTier":8},{"id":501,"name":"力量","maxTier":8},{"id":502,"name":"智力","maxTier":8},{"id":503,"name":"敏捷","maxTier":8},{"id":504,"name":"协调","maxTier":8},{"id":14,"name":"冻结率加成与冰霜抗性","maxTier":8},{"id":945,"name":"召唤物范围与伤害","maxTier":8}],"suffix":[{"id":7,"name":"虚空抗性","maxTier":8},{"id":8,"name":"躲避值","maxTier":8},{"id":10,"name":"腐化抗性","maxTier":8},{"id":13,"name":"火焰抗性","maxTier":8},{"id":17,"name":"冰霜抗性","maxTier":8},{"id":19,"name":"毒素抗性","maxTier":8},{"id":24,"name":"闪电抗性","maxTier":8},{"id":25,"name":"生命","maxTier":8},{"id":31,"name":"护甲","maxTier":8},{"id":40,"name":"提高偷取速率","maxTier":8},{"id":45,"name":"物理抗性","maxTier":8},{"id":58,"name":"提高晕眩几率","maxTier":8},{"id":80,"name":"元素抗性","maxTier":8},{"id":86,"name":"几率粉碎护甲于击中时","maxTier":8},{"id":90,"name":"每秒生命再生","maxTier":8},{"id":92,"name":"耐伤","maxTier":8},{"id":429,"name":"击中时施加虚弱几率","maxTier":8},{"id":36,"name":"复合生命","maxTier":8},{"id":97,"name":"暴击避免与增加躲避值","maxTier":8},{"id":426,"name":"格挡几率与格挡效率","maxTier":8},{"id":715,"name":"护甲与降低承受暴击额外伤害","maxTier":8}]},"单手斧":{"prefix":[{"id":2,"name":"近战攻击速度","maxTier":8},{"id":5,"name":"暴击几率","maxTier":8},{"id":6,"name":"暴击伤害加成","maxTier":8},{"id":12,"name":"火焰伤害","maxTier":8},{"id":15,"name":"虚空伤害","maxTier":8},{"id":16,"name":"冰霜伤害","maxTier":8},{"id":18,"name":"腐化伤害","maxTier":8},{"id":23,"name":"闪电伤害","maxTier":8},{"id":30,"name":"物理伤害","maxTier":8},{"id":61,"name":"毒素伤害","maxTier":8},{"id":62,"name":"近战暴击几率","maxTier":8},{"id":63,"name":"近战物理伤害","maxTier":8},{"id":69,"name":"近战伤害转化为生命偷取","maxTier":8},{"id":72,"name":"持续伤害","maxTier":8},{"id":76,"name":"近战虚空伤害","maxTier":8},{"id":77,"name":"近战火焰伤害","maxTier":8},{"id":78,"name":"近战冰霜伤害","maxTier":8},{"id":79,"name":"近战闪电伤害","maxTier":8},{"id":89,"name":"近战伤害","maxTier":8},{"id":717,"name":"招架几率","maxTier":8},{"id":718,"name":"魔力与魔力再生","maxTier":8},{"id":943,"name":"增加近战与法术腐化伤害","maxTier":8}],"suffix":[{"id":20,"name":"击杀时恢复生命","maxTier":8},{"id":44,"name":"近战击中时恢复生命","maxTier":8},{"id":54,"name":"击中时施加中毒几率","maxTier":8},{"id":55,"name":"击中时施加点燃几率","maxTier":8},{"id":56,"name":"击中时施加冰缓几率","maxTier":8},{"id":57,"name":"击中时施加迟缓几率","maxTier":8},{"id":58,"name":"提高晕眩几率","maxTier":8},{"id":60,"name":"击中时施加致盲几率","maxTier":8},{"id":68,"name":"击中时施加流血几率","maxTier":8},{"id":85,"name":"击中时施加感电几率","maxTier":8},{"id":86,"name":"几率粉碎护甲于击中时","maxTier":8},{"id":91,"name":"提高近战晕眩几率","maxTier":8},{"id":98,"name":"召唤物持续伤害","maxTier":8},{"id":428,"name":"近战击中时施加虚弱几率","maxTier":8},{"id":64,"name":"召唤物近战与弓箭伤害","maxTier":8},{"id":102,"name":"召唤物法术与弓箭伤害","maxTier":8},{"id":643,"name":"召唤物近战与法术伤害","maxTier":8},{"id":719,"name":"你与你的召唤物物理抗性穿透","maxTier":8},{"id":720,"name":"你与你的召唤物火焰抗性穿透","maxTier":8},{"id":721,"name":"你与你的召唤物冰霜抗性穿透","maxTier":8},{"id":722,"name":"你与你的召唤物闪电抗性穿透","maxTier":8},{"id":723,"name":"你与你的召唤物虚空抗性穿透","maxTier":8},{"id":724,"name":"你与你的召唤物腐化抗性穿透","maxTier":8},{"id":725,"name":"你与你的召唤物毒素抗性穿透","maxTier":8}]},"匕首":{"prefix":[{"id":2,"name":"近战攻击速度","maxTier":8},{"id":4,"name":"施法速度","maxTier":8},{"id":5,"name":"暴击几率","maxTier":8},{"id":6,"name":"暴击伤害加成","maxTier":8},{"id":12,"name":"火焰伤害","maxTier":8},{"id":16,"name":"冰霜伤害","maxTier":8},{"id":18,"name":"腐化伤害","maxTier":8},{"id":23,"name":"闪电伤害","maxTier":8},{"id":30,"name":"物理伤害","maxTier":8},{"id":61,"name":"毒素伤害","maxTier":8},{"id":62,"name":"近战暴击几率","maxTier":8},{"id":63,"name":"近战物理伤害","maxTier":8},{"id":69,"name":"近战伤害转化为生命偷取","maxTier":8},{"id":72,"name":"持续伤害","maxTier":8},{"id":76,"name":"近战虚空伤害","maxTier":8},{"id":77,"name":"近战火焰伤害","maxTier":8},{"id":78,"name":"近战冰霜伤害","maxTier":8},{"id":79,"name":"近战闪电伤害","maxTier":8},{"id":89,"name":"近战伤害","maxTier":8},{"id":717,"name":"招架几率","maxTier":8},{"id":718,"name":"魔力与魔力再生","maxTier":8},{"id":943,"name":"增加近战与法术腐化伤害","maxTier":8}],"suffix":[{"id":20,"name":"击杀时恢复生命","maxTier":8},{"id":44,"name":"近战击中时恢复生命","maxTier":8},{"id":54,"name":"击中时施加中毒几率","maxTier":8},{"id":55,"name":"击中时施加点燃几率","maxTier":8},{"id":56,"name":"击中时施加冰缓几率","maxTier":8},{"id":57,"name":"击中时施加迟缓几率","maxTier":8},{"id":58,"name":"提高晕眩几率","maxTier":8},{"id":60,"name":"击中时施加致盲几率","maxTier":8},{"id":68,"name":"击中时施加流血几率","maxTier":8},{"id":85,"name":"击中时施加感电几率","maxTier":8},{"id":86,"name":"几率粉碎护甲于击中时","maxTier":8},{"id":91,"name":"提高近战晕眩几率","maxTier":8},{"id":428,"name":"近战击中时施加虚弱几率","maxTier":8},{"id":64,"name":"召唤物近战与弓箭伤害","maxTier":8},{"id":719,"name":"你与你的召唤物物理抗性穿透","maxTier":8},{"id":720,"name":"你与你的召唤物火焰抗性穿透","maxTier":8},{"id":721,"name":"你与你的召唤物冰霜抗性穿透","maxTier":8},{"id":722,"name":"你与你的召唤物闪电抗性穿透","maxTier":8},{"id":723,"name":"你与你的召唤物虚空抗性穿透","maxTier":8},{"id":724,"name":"你与你的召唤物腐化抗性穿透","maxTier":8},{"id":725,"name":"你与你的召唤物毒素抗性穿透","maxTier":8}]},"单手锤":{"prefix":[{"id":2,"name":"近战攻击速度","maxTier":8},{"id":5,"name":"暴击几率","maxTier":8},{"id":6,"name":"暴击伤害加成","maxTier":8},{"id":12,"name":"火焰伤害","maxTier":8},{"id":15,"name":"虚空伤害","maxTier":8},{"id":16,"name":"冰霜伤害","maxTier":8},{"id":18,"name":"腐化伤害","maxTier":8},{"id":23,"name":"闪电伤害","maxTier":8},{"id":30,"name":"物理伤害","maxTier":8},{"id":61,"name":"毒素伤害","maxTier":8},{"id":62,"name":"近战暴击几率","maxTier":8},{"id":63,"name":"近战物理伤害","maxTier":8},{"id":69,"name":"近战伤害转化为生命偷取","maxTier":8},{"id":72,"name":"持续伤害","maxTier":8},{"id":76,"name":"近战虚空伤害","maxTier":8},{"id":77,"name":"近战火焰伤害","maxTier":8},{"id":78,"name":"近战冰霜伤害","maxTier":8},{"id":79,"name":"近战闪电伤害","maxTier":8},{"id":89,"name":"近战伤害","maxTier":8},{"id":717,"name":"招架几率","maxTier":8}],"suffix":[{"id":20,"name":"击杀时恢复生命","maxTier":8},{"id":44,"name":"近战击中时恢复生命","maxTier":8},{"id":54,"name":"击中时施加中毒几率","maxTier":8},{"id":55,"name":"击中时施加点燃几率","maxTier":8},{"id":56,"name":"击中时施加冰缓几率","maxTier":8},{"id":57,"name":"击中时施加迟缓几率","maxTier":8},{"id":58,"name":"提高晕眩几率","maxTier":8},{"id":60,"name":"击中时施加致盲几率","maxTier":8},{"id":85,"name":"击中时施加感电几率","maxTier":8},{"id":86,"name":"几率粉碎护甲于击中时","maxTier":8},{"id":91,"name":"提高近战晕眩几率","maxTier":8},{"id":428,"name":"近战击中时施加虚弱几率","maxTier":8},{"id":719,"name":"你与你的召唤物物理抗性穿透","maxTier":8},{"id":720,"name":"你与你的召唤物火焰抗性穿透","maxTier":8},{"id":721,"name":"你与你的召唤物冰霜抗性穿透","maxTier":8},{"id":722,"name":"你与你的召唤物闪电抗性穿透","maxTier":8},{"id":723,"name":"你与你的召唤物虚空抗性穿透","maxTier":8}]},"权杖":{"prefix":[{"id":2,"name":"近战攻击速度","maxTier":8},{"id":4,"name":"施法速度","maxTier":8},{"id":5,"name":"暴击几率","maxTier":8},{"id":6,"name":"暴击伤害加成","maxTier":8},{"id":9,"name":"元素伤害","maxTier":8},{"id":12,"name":"火焰伤害","maxTier":8},{"id":15,"name":"虚空伤害","maxTier":8},{"id":16,"name":"冰霜伤害","maxTier":8},{"id":18,"name":"腐化伤害","maxTier":8},{"id":23,"name":"闪电伤害","maxTier":8},{"id":30,"name":"物理伤害","maxTier":8},{"id":38,"name":"法术伤害","maxTier":8},{"id":61,"name":"毒素伤害","maxTier":8},{"id":62,"name":"近战暴击几率","maxTier":8},{"id":63,"name":"近战物理伤害","maxTier":8},{"id":69,"name":"近战伤害转化为生命偷取","maxTier":8},{"id":72,"name":"持续伤害","maxTier":8},{"id":76,"name":"近战虚空伤害","maxTier":8},{"id":77,"name":"近战火焰伤害","maxTier":8},{"id":78,"name":"近战冰霜伤害","maxTier":8},{"id":79,"name":"近战闪电伤害","maxTier":8},{"id":84,"name":"法术暴击几率","maxTier":8},{"id":89,"name":"近战伤害","maxTier":8},{"id":42,"name":"闪电伤害与生命偷取","maxTier":8},{"id":506,"name":"法术伤害与降低魔力消耗","maxTier":8},{"id":759,"name":"魔力与魔力消耗转化为能量护盾","maxTier":8}],"suffix":[{"id":11,"name":"冻结率加成","maxTier":8},{"id":20,"name":"击杀时恢复生命","maxTier":8},{"id":54,"name":"击中时施加中毒几率","maxTier":8},{"id":55,"name":"击中时施加点燃几率","maxTier":8},{"id":56,"name":"击中时施加冰缓几率","maxTier":8},{"id":57,"name":"击中时施加迟缓几率","maxTier":8},{"id":58,"name":"提高晕眩几率","maxTier":8},{"id":60,"name":"击中时施加致盲几率","maxTier":8},{"id":85,"name":"击中时施加感电几率","maxTier":8},{"id":91,"name":"提高近战晕眩几率","maxTier":8},{"id":102,"name":"召唤物法术与弓箭伤害","maxTier":8},{"id":643,"name":"召唤物近战与法术伤害","maxTier":8},{"id":719,"name":"你与你的召唤物物理抗性穿透","maxTier":8},{"id":720,"name":"你与你的召唤物火焰抗性穿透","maxTier":8},{"id":721,"name":"你与你的召唤物冰霜抗性穿透","maxTier":8},{"id":722,"name":"你与你的召唤物闪电抗性穿透","maxTier":8},{"id":723,"name":"你与你的召唤物虚空抗性穿透","maxTier":8},{"id":724,"name":"你与你的召唤物腐化抗性穿透","maxTier":8},{"id":725,"name":"你与你的召唤物毒素抗性穿透","maxTier":8}]},"单手剑":{"prefix":[{"id":2,"name":"近战攻击速度","maxTier":8},{"id":5,"name":"暴击几率","maxTier":8},{"id":6,"name":"暴击伤害加成","maxTier":8},{"id":12,"name":"火焰伤害","maxTier":8},{"id":15,"name":"虚空伤害","maxTier":8},{"id":16,"name":"冰霜伤害","maxTier":8},{"id":18,"name":"腐化伤害","maxTier":8},{"id":23,"name":"闪电伤害","maxTier":8},{"id":30,"name":"物理伤害","maxTier":8},{"id":49,"name":"法术伤害","maxTier":8},{"id":61,"name":"毒素伤害","maxTier":8},{"id":62,"name":"近战暴击几率","maxTier":8},{"id":63,"name":"近战物理伤害","maxTier":8},{"id":69,"name":"近战伤害转化为生命偷取","maxTier":8},{"id":72,"name":"持续伤害","maxTier":8},{"id":76,"name":"近战虚空伤害","maxTier":8},{"id":77,"name":"近战火焰伤害","maxTier":8},{"id":78,"name":"近战冰霜伤害","maxTier":8},{"id":79,"name":"近战闪电伤害","maxTier":8},{"id":89,"name":"近战伤害","maxTier":8},{"id":717,"name":"招架几率","maxTier":8},{"id":718,"name":"魔力与魔力再生","maxTier":8}],"suffix":[{"id":20,"name":"击杀时恢复生命","maxTier":8},{"id":44,"name":"近战击中时恢复生命","maxTier":8},{"id":54,"name":"击中时施加中毒几率","maxTier":8},{"id":55,"name":"击中时施加点燃几率","maxTier":8},{"id":56,"name":"击中时施加冰缓几率","maxTier":8},{"id":57,"name":"击中时施加迟缓几率","maxTier":8},{"id":58,"name":"提高晕眩几率","maxTier":8},{"id":59,"name":"躲避值","maxTier":8},{"id":60,"name":"击中时施加致盲几率","maxTier":8},{"id":68,"name":"击中时施加流血几率","maxTier":8},{"id":85,"name":"击中时施加感电几率","maxTier":8},{"id":86,"name":"几率粉碎护甲于击中时","maxTier":8},{"id":91,"name":"提高近战晕眩几率","maxTier":8},{"id":98,"name":"召唤物持续伤害","maxTier":8},{"id":428,"name":"近战击中时施加虚弱几率","maxTier":8},{"id":64,"name":"召唤物近战与弓箭伤害","maxTier":8},{"id":643,"name":"召唤物近战与法术伤害","maxTier":8},{"id":719,"name":"你与你的召唤物物理抗性穿透","maxTier":8},{"id":720,"name":"你与你的召唤物火焰抗性穿透","maxTier":8},{"id":721,"name":"你与你的召唤物冰霜抗性穿透","maxTier":8},{"id":722,"name":"你与你的召唤物闪电抗性穿透","maxTier":8},{"id":723,"name":"你与你的召唤物虚空抗性穿透","maxTier":8},{"id":725,"name":"你与你的召唤物毒素抗性穿透","maxTier":8}]},"魔杖":{"prefix":[{"id":4,"name":"施法速度","maxTier":8},{"id":5,"name":"暴击几率","maxTier":8},{"id":6,"name":"暴击伤害加成","maxTier":8},{"id":9,"name":"元素伤害","maxTier":8},{"id":12,"name":"火焰伤害","maxTier":8},{"id":16,"name":"冰霜伤害","maxTier":8},{"id":18,"name":"腐化伤害","maxTier":8},{"id":23,"name":"闪电伤害","maxTier":8},{"id":30,"name":"物理伤害","maxTier":8},{"id":38,"name":"法术伤害","maxTier":8},{"id":72,"name":"持续伤害","maxTier":8},{"id":84,"name":"法术暴击几率","maxTier":8},{"id":100,"name":"元素持续伤害","maxTier":8},{"id":718,"name":"魔力与魔力再生","maxTier":8},{"id":759,"name":"魔力与魔力消耗转化为能量护盾","maxTier":8}],"suffix":[{"id":11,"name":"冻结率加成","maxTier":8},{"id":55,"name":"击中时施加点燃几率","maxTier":8},{"id":56,"name":"击中时施加冰缓几率","maxTier":8},{"id":57,"name":"击中时施加迟缓几率","maxTier":8},{"id":58,"name":"提高晕眩几率","maxTier":8},{"id":60,"name":"击中时施加致盲几率","maxTier":8},{"id":85,"name":"击中时施加感电几率","maxTier":8},{"id":102,"name":"召唤物法术与弓箭伤害","maxTier":8},{"id":719,"name":"你与你的召唤物物理抗性穿透","maxTier":8},{"id":720,"name":"你与你的召唤物火焰抗性穿透","maxTier":8},{"id":721,"name":"你与你的召唤物冰霜抗性穿透","maxTier":8},{"id":722,"name":"你与你的召唤物闪电抗性穿透","maxTier":8},{"id":723,"name":"你与你的召唤物虚空抗性穿透","maxTier":8},{"id":724,"name":"你与你的召唤物腐化抗性穿透","maxTier":8},{"id":725,"name":"你与你的召唤物毒素抗性穿透","maxTier":8}]},"双手斧":{"prefix":[{"id":2,"name":"近战攻击速度","maxTier":8},{"id":5,"name":"暴击几率","maxTier":8},{"id":6,"name":"暴击伤害加成","maxTier":8},{"id":12,"name":"火焰伤害","maxTier":8},{"id":15,"name":"虚空伤害","maxTier":8},{"id":16,"name":"冰霜伤害","maxTier":8},{"id":18,"name":"腐化伤害","maxTier":8},{"id":23,"name":"闪电伤害","maxTier":8},{"id":30,"name":"物理伤害","maxTier":8},{"id":61,"name":"毒素伤害","maxTier":8},{"id":62,"name":"近战暴击几率","maxTier":8},{"id":63,"name":"近战物理伤害","maxTier":8},{"id":69,"name":"近战伤害转化为生命偷取","maxTier":8},{"id":72,"name":"持续伤害","maxTier":8},{"id":76,"name":"近战虚空伤害","maxTier":8},{"id":77,"name":"近战火焰伤害","maxTier":8},{"id":78,"name":"近战冰霜伤害","maxTier":8},{"id":79,"name":"近战闪电伤害","maxTier":8},{"id":89,"name":"近战伤害","maxTier":8},{"id":717,"name":"招架几率","maxTier":8},{"id":718,"name":"魔力与魔力再生","maxTier":8},{"id":943,"name":"增加近战与法术腐化伤害","maxTier":8}],"suffix":[{"id":20,"name":"击杀时恢复生命","maxTier":8},{"id":44,"name":"近战击中时恢复生命","maxTier":8},{"id":50,"name":"所有属性","maxTier":8},{"id":54,"name":"击中时施加中毒几率","maxTier":8},{"id":55,"name":"击中时施加点燃几率","maxTier":8},{"id":56,"name":"击中时施加冰缓几率","maxTier":8},{"id":57,"name":"击中时施加迟缓几率","maxTier":8},{"id":58,"name":"提高晕眩几率","maxTier":8},{"id":60,"name":"击中时施加致盲几率","maxTier":8},{"id":68,"name":"击中时施加流血几率","maxTier":8},{"id":85,"name":"击中时施加感电几率","maxTier":8},{"id":86,"name":"几率粉碎护甲于击中时","maxTier":8},{"id":91,"name":"提高近战晕眩几率","maxTier":8},{"id":98,"name":"召唤物持续伤害","maxTier":8},{"id":427,"name":"降低承受暴击额外伤害","maxTier":8},{"id":428,"name":"近战击中时施加虚弱几率","maxTier":8},{"id":671,"name":"提高近战技能范围","maxTier":8},{"id":64,"name":"召唤物近战与弓箭伤害","maxTier":8},{"id":102,"name":"召唤物法术与弓箭伤害","maxTier":8},{"id":643,"name":"召唤物近战与法术伤害","maxTier":8},{"id":719,"name":"你与你的召唤物物理抗性穿透","maxTier":8},{"id":720,"name":"你与你的召唤物火焰抗性穿透","maxTier":8},{"id":721,"name":"你与你的召唤物冰霜抗性穿透","maxTier":8},{"id":722,"name":"你与你的召唤物闪电抗性穿透","maxTier":8},{"id":723,"name":"你与你的召唤物虚空抗性穿透","maxTier":8},{"id":724,"name":"你与你的召唤物腐化抗性穿透","maxTier":8},{"id":725,"name":"你与你的召唤物毒素抗性穿透","maxTier":8}]},"双手锤":{"prefix":[{"id":2,"name":"近战攻击速度","maxTier":8},{"id":5,"name":"暴击几率","maxTier":8},{"id":6,"name":"暴击伤害加成","maxTier":8},{"id":12,"name":"火焰伤害","maxTier":8},{"id":15,"name":"虚空伤害","maxTier":8},{"id":16,"name":"冰霜伤害","maxTier":8},{"id":18,"name":"腐化伤害","maxTier":8},{"id":23,"name":"闪电伤害","maxTier":8},{"id":30,"name":"物理伤害","maxTier":8},{"id":61,"name":"毒素伤害","maxTier":8},{"id":62,"name":"近战暴击几率","maxTier":8},{"id":63,"name":"近战物理伤害","maxTier":8},{"id":69,"name":"近战伤害转化为生命偷取","maxTier":8},{"id":72,"name":"持续伤害","maxTier":8},{"id":76,"name":"近战虚空伤害","maxTier":8},{"id":77,"name":"近战火焰伤害","maxTier":8},{"id":78,"name":"近战冰霜伤害","maxTier":8},{"id":79,"name":"近战闪电伤害","maxTier":8},{"id":89,"name":"近战伤害","maxTier":8},{"id":717,"name":"招架几率","maxTier":8}],"suffix":[{"id":20,"name":"击杀时恢复生命","maxTier":8},{"id":44,"name":"近战击中时恢复生命","maxTier":8},{"id":50,"name":"所有属性","maxTier":8},{"id":54,"name":"击中时施加中毒几率","maxTier":8},{"id":55,"name":"击中时施加点燃几率","maxTier":8},{"id":56,"name":"击中时施加冰缓几率","maxTier":8},{"id":57,"name":"击中时施加迟缓几率","maxTier":8},{"id":58,"name":"提高晕眩几率","maxTier":8},{"id":60,"name":"击中时施加致盲几率","maxTier":8},{"id":85,"name":"击中时施加感电几率","maxTier":8},{"id":86,"name":"几率粉碎护甲于击中时","maxTier":8},{"id":91,"name":"提高近战晕眩几率","maxTier":8},{"id":427,"name":"降低承受暴击额外伤害","maxTier":8},{"id":428,"name":"近战击中时施加虚弱几率","maxTier":8},{"id":671,"name":"提高近战技能范围","maxTier":8},{"id":719,"name":"你与你的召唤物物理抗性穿透","maxTier":8},{"id":720,"name":"你与你的召唤物火焰抗性穿透","maxTier":8},{"id":721,"name":"你与你的召唤物冰霜抗性穿透","maxTier":8},{"id":722,"name":"你与你的召唤物闪电抗性穿透","maxTier":8},{"id":723,"name":"你与你的召唤物虚空抗性穿透","maxTier":8}]},"长矛":{"prefix":[{"id":2,"name":"近战攻击速度","maxTier":8},{"id":5,"name":"暴击几率","maxTier":8},{"id":6,"name":"暴击伤害加成","maxTier":8},{"id":12,"name":"火焰伤害","maxTier":8},{"id":15,"name":"虚空伤害","maxTier":8},{"id":16,"name":"冰霜伤害","maxTier":8},{"id":18,"name":"腐化伤害","maxTier":8},{"id":23,"name":"闪电伤害","maxTier":8},{"id":30,"name":"物理伤害","maxTier":8},{"id":61,"name":"毒素伤害","maxTier":8},{"id":62,"name":"近战暴击几率","maxTier":8},{"id":63,"name":"近战物理伤害","maxTier":8},{"id":69,"name":"近战伤害转化为生命偷取","maxTier":8},{"id":72,"name":"持续伤害","maxTier":8},{"id":76,"name":"近战虚空伤害","maxTier":8},{"id":77,"name":"近战火焰伤害","maxTier":8},{"id":78,"name":"近战冰霜伤害","maxTier":8},{"id":79,"name":"近战闪电伤害","maxTier":8},{"id":89,"name":"近战伤害","maxTier":8},{"id":717,"name":"招架几率","maxTier":8},{"id":718,"name":"魔力与魔力再生","maxTier":8}],"suffix":[{"id":20,"name":"击杀时恢复生命","maxTier":8},{"id":44,"name":"近战击中时恢复生命","maxTier":8},{"id":50,"name":"所有属性","maxTier":8},{"id":54,"name":"击中时施加中毒几率","maxTier":8},{"id":55,"name":"击中时施加点燃几率","maxTier":8},{"id":56,"name":"击中时施加冰缓几率","maxTier":8},{"id":57,"name":"击中时施加迟缓几率","maxTier":8},{"id":58,"name":"提高晕眩几率","maxTier":8},{"id":60,"name":"击中时施加致盲几率","maxTier":8},{"id":68,"name":"击中时施加流血几率","maxTier":8},{"id":85,"name":"击中时施加感电几率","maxTier":8},{"id":86,"name":"几率粉碎护甲于击中时","maxTier":8},{"id":91,"name":"提高近战晕眩几率","maxTier":8},{"id":98,"name":"召唤物持续伤害","maxTier":8},{"id":427,"name":"降低承受暴击额外伤害","maxTier":8},{"id":428,"name":"近战击中时施加虚弱几率","maxTier":8},{"id":671,"name":"提高近战技能范围","maxTier":8},{"id":64,"name":"召唤物近战与弓箭伤害","maxTier":8},{"id":643,"name":"召唤物近战与法术伤害","maxTier":8},{"id":719,"name":"你与你的召唤物物理抗性穿透","maxTier":8},{"id":720,"name":"你与你的召唤物火焰抗性穿透","maxTier":8},{"id":721,"name":"你与你的召唤物冰霜抗性穿透","maxTier":8},{"id":722,"name":"你与你的召唤物闪电抗性穿透","maxTier":8},{"id":723,"name":"你与你的召唤物虚空抗性穿透","maxTier":8},{"id":725,"name":"你与你的召唤物毒素抗性穿透","maxTier":8}]},"长杖":{"prefix":[{"id":4,"name":"施法速度","maxTier":8},{"id":5,"name":"暴击几率","maxTier":8},{"id":6,"name":"暴击伤害加成","maxTier":8},{"id":9,"name":"元素伤害","maxTier":8},{"id":12,"name":"火焰伤害","maxTier":8},{"id":15,"name":"虚空伤害","maxTier":8},{"id":16,"name":"冰霜伤害","maxTier":8},{"id":18,"name":"腐化伤害","maxTier":8},{"id":23,"name":"闪电伤害","maxTier":8},{"id":30,"name":"物理伤害","maxTier":8},{"id":38,"name":"法术伤害","maxTier":8},{"id":61,"name":"毒素伤害","maxTier":8},{"id":62,"name":"近战暴击几率","maxTier":8},{"id":63,"name":"近战物理伤害","maxTier":8},{"id":72,"name":"持续伤害","maxTier":8},{"id":76,"name":"近战虚空伤害","maxTier":8},{"id":77,"name":"近战火焰伤害","maxTier":8},{"id":78,"name":"近战冰霜伤害","maxTier":8},{"id":79,"name":"近战闪电伤害","maxTier":8},{"id":84,"name":"法术暴击几率","maxTier":8},{"id":100,"name":"元素持续伤害","maxTier":8},{"id":103,"name":"引导期间伤害","maxTier":8},{"id":717,"name":"招架几率","maxTier":8},{"id":718,"name":"魔力与魔力再生","maxTier":8},{"id":759,"name":"魔力与魔力消耗转化为能量护盾","maxTier":8}],"suffix":[{"id":11,"name":"冻结率加成","maxTier":8},{"id":20,"name":"击杀时恢复生命","maxTier":8},{"id":54,"name":"击中时施加中毒几率","maxTier":8},{"id":55,"name":"击中时施加点燃几率","maxTier":8},{"id":56,"name":"击中时施加冰缓几率","maxTier":8},{"id":57,"name":"击中时施加迟缓几率","maxTier":8},{"id":58,"name":"提高晕眩几率","maxTier":8},{"id":60,"name":"击中时施加致盲几率","maxTier":8},{"id":85,"name":"击中时施加感电几率","maxTier":8},{"id":64,"name":"召唤物近战与弓箭伤害","maxTier":8},{"id":102,"name":"召唤物法术与弓箭伤害","maxTier":8},{"id":643,"name":"召唤物近战与法术伤害","maxTier":8},{"id":719,"name":"你与你的召唤物物理抗性穿透","maxTier":8},{"id":720,"name":"你与你的召唤物火焰抗性穿透","maxTier":8},{"id":721,"name":"你与你的召唤物冰霜抗性穿透","maxTier":8},{"id":722,"name":"你与你的召唤物闪电抗性穿透","maxTier":8},{"id":723,"name":"你与你的召唤物虚空抗性穿透","maxTier":8},{"id":724,"name":"你与你的召唤物腐化抗性穿透","maxTier":8},{"id":725,"name":"你与你的召唤物毒素抗性穿透","maxTier":8}]},"双手剑":{"prefix":[{"id":2,"name":"近战攻击速度","maxTier":8},{"id":5,"name":"暴击几率","maxTier":8},{"id":6,"name":"暴击伤害加成","maxTier":8},{"id":12,"name":"火焰伤害","maxTier":8},{"id":15,"name":"虚空伤害","maxTier":8},{"id":16,"name":"冰霜伤害","maxTier":8},{"id":18,"name":"腐化伤害","maxTier":8},{"id":23,"name":"闪电伤害","maxTier":8},{"id":30,"name":"物理伤害","maxTier":8},{"id":61,"name":"毒素伤害","maxTier":8},{"id":62,"name":"近战暴击几率","maxTier":8},{"id":63,"name":"近战物理伤害","maxTier":8},{"id":69,"name":"近战伤害转化为生命偷取","maxTier":8},{"id":72,"name":"持续伤害","maxTier":8},{"id":76,"name":"近战虚空伤害","maxTier":8},{"id":77,"name":"近战火焰伤害","maxTier":8},{"id":78,"name":"近战冰霜伤害","maxTier":8},{"id":79,"name":"近战闪电伤害","maxTier":8},{"id":89,"name":"近战伤害","maxTier":8},{"id":717,"name":"招架几率","maxTier":8},{"id":718,"name":"魔力与魔力再生","maxTier":8}],"suffix":[{"id":20,"name":"击杀时恢复生命","maxTier":8},{"id":44,"name":"近战击中时恢复生命","maxTier":8},{"id":50,"name":"所有属性","maxTier":8},{"id":54,"name":"击中时施加中毒几率","maxTier":8},{"id":55,"name":"击中时施加点燃几率","maxTier":8},{"id":56,"name":"击中时施加冰缓几率","maxTier":8},{"id":57,"name":"击中时施加迟缓几率","maxTier":8},{"id":58,"name":"提高晕眩几率","maxTier":8},{"id":60,"name":"击中时施加致盲几率","maxTier":8},{"id":68,"name":"击中时施加流血几率","maxTier":8},{"id":85,"name":"击中时施加感电几率","maxTier":8},{"id":86,"name":"几率粉碎护甲于击中时","maxTier":8},{"id":91,"name":"提高近战晕眩几率","maxTier":8},{"id":98,"name":"召唤物持续伤害","maxTier":8},{"id":427,"name":"降低承受暴击额外伤害","maxTier":8},{"id":428,"name":"近战击中时施加虚弱几率","maxTier":8},{"id":671,"name":"提高近战技能范围","maxTier":8},{"id":64,"name":"召唤物近战与弓箭伤害","maxTier":8},{"id":643,"name":"召唤物近战与法术伤害","maxTier":8},{"id":719,"name":"你与你的召唤物物理抗性穿透","maxTier":8},{"id":720,"name":"你与你的召唤物火焰抗性穿透","maxTier":8},{"id":721,"name":"你与你的召唤物冰霜抗性穿透","maxTier":8},{"id":722,"name":"你与你的召唤物闪电抗性穿透","maxTier":8},{"id":723,"name":"你与你的召唤物虚空抗性穿透","maxTier":8},{"id":725,"name":"你与你的召唤物毒素抗性穿透","maxTier":8}]},"箭袋":{"prefix":[{"id":5,"name":"暴击几率","maxTier":8},{"id":12,"name":"火焰伤害","maxTier":8},{"id":16,"name":"冰霜伤害","maxTier":8},{"id":23,"name":"闪电伤害","maxTier":8},{"id":26,"name":"召唤物伤害","maxTier":8},{"id":30,"name":"物理伤害","maxTier":8},{"id":61,"name":"毒素伤害","maxTier":8},{"id":72,"name":"持续伤害","maxTier":8},{"id":431,"name":"弓箭伤害","maxTier":8},{"id":432,"name":"弓箭攻击速度","maxTier":8},{"id":433,"name":"弓箭物理伤害","maxTier":8},{"id":434,"name":"弓箭火焰伤害","maxTier":8},{"id":503,"name":"敏捷","maxTier":8},{"id":669,"name":"弓闪电伤害","maxTier":8},{"id":670,"name":"弓寒冷伤害","maxTier":8}],"suffix":[{"id":7,"name":"虚空抗性","maxTier":8},{"id":10,"name":"腐化抗性","maxTier":8},{"id":13,"name":"火焰抗性","maxTier":8},{"id":17,"name":"冰霜抗性","maxTier":8},{"id":19,"name":"毒素抗性","maxTier":8},{"id":20,"name":"击杀时恢复生命","maxTier":8},{"id":24,"name":"闪电抗性","maxTier":8},{"id":45,"name":"物理抗性","maxTier":8},{"id":54,"name":"击中时施加中毒几率","maxTier":8},{"id":55,"name":"击中时施加点燃几率","maxTier":8},{"id":56,"name":"击中时施加冰缓几率","maxTier":8},{"id":57,"name":"击中时施加迟缓几率","maxTier":8},{"id":58,"name":"提高晕眩几率","maxTier":8},{"id":60,"name":"击中时施加致盲几率","maxTier":8},{"id":68,"name":"击中时施加流血几率","maxTier":8},{"id":80,"name":"元素抗性","maxTier":8},{"id":85,"name":"击中时施加感电几率","maxTier":8},{"id":86,"name":"几率粉碎护甲于击中时","maxTier":8}]},"盾牌":{"prefix":[{"id":3,"name":"格挡几率","maxTier":8},{"id":30,"name":"物理伤害","maxTier":8},{"id":41,"name":"格挡时恢复生命","maxTier":8},{"id":43,"name":"提高治疗效率","maxTier":8},{"id":70,"name":"召唤物生命","maxTier":8},{"id":81,"name":"格挡效率","maxTier":8},{"id":89,"name":"近战伤害","maxTier":8},{"id":95,"name":"伤害反射至攻击者","maxTier":8},{"id":96,"name":"伤害反射","maxTier":8}],"suffix":[{"id":1,"name":"护甲","maxTier":8},{"id":7,"name":"虚空抗性","maxTier":8},{"id":10,"name":"腐化抗性","maxTier":8},{"id":13,"name":"火焰抗性","maxTier":8},{"id":17,"name":"冰霜抗性","maxTier":8},{"id":19,"name":"毒素抗性","maxTier":8},{"id":24,"name":"闪电抗性","maxTier":8},{"id":25,"name":"生命","maxTier":8},{"id":31,"name":"护甲","maxTier":8},{"id":45,"name":"物理抗性","maxTier":8},{"id":46,"name":"所有抗性","maxTier":8},{"id":47,"name":"冰缓攻击者几率","maxTier":8},{"id":48,"name":"迟缓攻击者几率","maxTier":8},{"id":74,"name":"格挡时承受伤害","maxTier":8},{"id":80,"name":"元素抗性","maxTier":8},{"id":92,"name":"耐伤","maxTier":8},{"id":94,"name":"感电攻击者几率","maxTier":8},{"id":715,"name":"护甲与降低承受暴击额外伤害","maxTier":8}]},"法器":{"prefix":[{"id":4,"name":"施法速度","maxTier":8},{"id":5,"name":"暴击几率","maxTier":8},{"id":6,"name":"暴击伤害加成","maxTier":8},{"id":9,"name":"元素伤害","maxTier":8},{"id":12,"name":"火焰伤害","maxTier":8},{"id":16,"name":"冰霜伤害","maxTier":8},{"id":18,"name":"腐化伤害","maxTier":8},{"id":23,"name":"闪电伤害","maxTier":8},{"id":26,"name":"召唤物伤害","maxTier":8},{"id":34,"name":"魔力","maxTier":8},{"id":38,"name":"法术伤害","maxTier":8},{"id":61,"name":"毒素伤害","maxTier":8},{"id":70,"name":"召唤物生命","maxTier":8},{"id":72,"name":"持续伤害","maxTier":8},{"id":84,"name":"法术暴击几率","maxTier":8}],"suffix":[{"id":7,"name":"虚空抗性","maxTier":8},{"id":8,"name":"躲避值","maxTier":8},{"id":10,"name":"腐化抗性","maxTier":8},{"id":11,"name":"冻结率加成","maxTier":8},{"id":13,"name":"火焰抗性","maxTier":8},{"id":17,"name":"冰霜抗性","maxTier":8},{"id":19,"name":"毒素抗性","maxTier":8},{"id":24,"name":"闪电抗性","maxTier":8},{"id":47,"name":"冰缓攻击者几率","maxTier":8},{"id":48,"name":"迟缓攻击者几率","maxTier":8},{"id":80,"name":"元素抗性","maxTier":8},{"id":94,"name":"感电攻击者几率","maxTier":8},{"id":382,"name":"每秒获得能量护盾","maxTier":8}]},"护身符":{"prefix":[{"id":0,"name":"虚空抗性穿透","maxTier":8},{"id":5,"name":"暴击几率","maxTier":8},{"id":6,"name":"暴击伤害加成","maxTier":8},{"id":9,"name":"元素伤害","maxTier":8},{"id":12,"name":"火焰伤害","maxTier":8},{"id":15,"name":"虚空伤害","maxTier":8},{"id":16,"name":"冰霜伤害","maxTier":8},{"id":18,"name":"腐化伤害","maxTier":8},{"id":23,"name":"闪电伤害","maxTier":8},{"id":26,"name":"召唤物伤害","maxTier":8},{"id":30,"name":"物理伤害","maxTier":8},{"id":32,"name":"火焰抗性穿透","maxTier":8},{"id":33,"name":"物理抗性穿透","maxTier":8},{"id":34,"name":"魔力","maxTier":8},{"id":35,"name":"冰霜抗性穿透","maxTier":8},{"id":37,"name":"毒素抗性穿透","maxTier":8},{"id":38,"name":"法术伤害","maxTier":8},{"id":39,"name":"闪电抗性穿透","maxTier":8},{"id":43,"name":"提高治疗效率","maxTier":8},{"id":61,"name":"毒素伤害","maxTier":8},{"id":65,"name":"提高发现药剂几率","maxTier":8},{"id":66,"name":"使用药剂时获得能量护盾","maxTier":8},{"id":70,"name":"召唤物生命","maxTier":8},{"id":72,"name":"持续伤害","maxTier":8},{"id":84,"name":"法术暴击几率","maxTier":8},{"id":88,"name":"投掷伤害","maxTier":8},{"id":93,"name":"腐化抗性穿透","maxTier":8},{"id":99,"name":"击杀时获得能量护盾","maxTier":8},{"id":100,"name":"元素持续伤害","maxTier":8},{"id":101,"name":"提高范围技能的范围","maxTier":8},{"id":103,"name":"引导期间伤害","maxTier":8},{"id":330,"name":"魔力再生","maxTier":8},{"id":14,"name":"冻结率加成与冰霜抗性","maxTier":8},{"id":945,"name":"召唤物范围与伤害","maxTier":8}],"suffix":[{"id":7,"name":"虚空抗性","maxTier":8},{"id":8,"name":"躲避值","maxTier":8},{"id":10,"name":"腐化抗性","maxTier":8},{"id":13,"name":"火焰抗性","maxTier":8},{"id":17,"name":"冰霜抗性","maxTier":8},{"id":19,"name":"毒素抗性","maxTier":8},{"id":24,"name":"闪电抗性","maxTier":8},{"id":25,"name":"生命","maxTier":8},{"id":45,"name":"物理抗性","maxTier":8},{"id":55,"name":"击中时施加点燃几率","maxTier":8},{"id":59,"name":"躲避值","maxTier":8},{"id":80,"name":"元素抗性","maxTier":8},{"id":85,"name":"击中时施加感电几率","maxTier":8},{"id":86,"name":"几率粉碎护甲于击中时","maxTier":8},{"id":90,"name":"每秒生命再生","maxTier":8},{"id":429,"name":"击中时施加虚弱几率","maxTier":8},{"id":29,"name":"生命与晕眩避免","maxTier":8},{"id":824,"name":"每秒获得能量护盾与能量护盾衰减阈值","maxTier":8}]},"戒指":{"prefix":[{"id":5,"name":"暴击几率","maxTier":8},{"id":9,"name":"元素伤害","maxTier":8},{"id":12,"name":"火焰伤害","maxTier":8},{"id":15,"name":"虚空伤害","maxTier":8},{"id":16,"name":"冰霜伤害","maxTier":8},{"id":18,"name":"腐化伤害","maxTier":8},{"id":23,"name":"闪电伤害","maxTier":8},{"id":26,"name":"召唤物伤害","maxTier":8},{"id":30,"name":"物理伤害","maxTier":8},{"id":38,"name":"法术伤害","maxTier":8},{"id":43,"name":"提高治疗效率","maxTier":8},{"id":61,"name":"毒素伤害","maxTier":8},{"id":70,"name":"召唤物生命","maxTier":8},{"id":71,"name":"召唤物躲避值","maxTier":8},{"id":72,"name":"持续伤害","maxTier":8},{"id":83,"name":"药剂恢复生命转化为能量护盾","maxTier":8},{"id":87,"name":"投掷攻击速度","maxTier":8},{"id":100,"name":"元素持续伤害","maxTier":8},{"id":330,"name":"魔力再生","maxTier":8},{"id":501,"name":"力量","maxTier":8},{"id":502,"name":"智力","maxTier":8},{"id":503,"name":"敏捷","maxTier":8},{"id":504,"name":"协调","maxTier":8},{"id":14,"name":"冻结率加成与冰霜抗性","maxTier":8},{"id":507,"name":"投掷伤害与降低魔力消耗","maxTier":8}],"suffix":[{"id":7,"name":"虚空抗性","maxTier":8},{"id":8,"name":"躲避值","maxTier":8},{"id":10,"name":"腐化抗性","maxTier":8},{"id":13,"name":"火焰抗性","maxTier":8},{"id":17,"name":"冰霜抗性","maxTier":8},{"id":19,"name":"毒素抗性","maxTier":8},{"id":22,"name":"生命再生","maxTier":8},{"id":24,"name":"闪电抗性","maxTier":8},{"id":25,"name":"生命","maxTier":8},{"id":45,"name":"物理抗性","maxTier":8},{"id":51,"name":"晕眩避免","maxTier":8},{"id":80,"name":"元素抗性","maxTier":8},{"id":92,"name":"耐伤","maxTier":8},{"id":97,"name":"暴击避免与增加躲避值","maxTier":8},{"id":426,"name":"格挡几率与格挡效率","maxTier":8},{"id":824,"name":"每秒获得能量护盾与能量护盾衰减阈值","maxTier":8},{"id":825,"name":"增加生命与生命再生","maxTier":8}]},"遗物":{"prefix":[{"id":4,"name":"施法速度","maxTier":8},{"id":5,"name":"暴击几率","maxTier":8},{"id":6,"name":"暴击伤害加成","maxTier":8},{"id":12,"name":"火焰伤害","maxTier":8},{"id":15,"name":"虚空伤害","maxTier":8},{"id":16,"name":"冰霜伤害","maxTier":8},{"id":18,"name":"腐化伤害","maxTier":8},{"id":23,"name":"闪电伤害","maxTier":8},{"id":26,"name":"召唤物伤害","maxTier":8},{"id":30,"name":"物理伤害","maxTier":8},{"id":34,"name":"魔力","maxTier":8},{"id":43,"name":"提高治疗效率","maxTier":8},{"id":61,"name":"毒素伤害","maxTier":8},{"id":70,"name":"召唤物生命","maxTier":8},{"id":71,"name":"召唤物躲避值","maxTier":8},{"id":72,"name":"持续伤害","maxTier":8},{"id":73,"name":"召唤物生命再生","maxTier":8},{"id":83,"name":"药剂恢复生命转化为能量护盾","maxTier":8},{"id":84,"name":"法术暴击几率","maxTier":8},{"id":88,"name":"投掷伤害","maxTier":8},{"id":100,"name":"元素持续伤害","maxTier":8},{"id":103,"name":"引导期间伤害","maxTier":8},{"id":330,"name":"魔力再生","maxTier":8},{"id":501,"name":"力量","maxTier":8},{"id":502,"name":"智力","maxTier":8},{"id":503,"name":"敏捷","maxTier":8},{"id":504,"name":"协调","maxTier":8},{"id":14,"name":"冻结率加成与冰霜抗性","maxTier":8},{"id":539,"name":"横扫等级","maxTier":8},{"id":542,"name":"狂怒跃击等级","maxTier":8},{"id":545,"name":"召唤狂暴图腾等级","maxTier":8},{"id":553,"name":"熔岩球等级","maxTier":8},{"id":554,"name":"黑洞等级","maxTier":8},{"id":558,"name":"毒蛇打击等级","maxTier":8},{"id":564,"name":"飞锤投掷等级","maxTier":8},{"id":573,"name":"炼狱幽影等级","maxTier":8},{"id":576,"name":"腐朽光环等级","maxTier":8},{"id":583,"name":"血肉转移等级","maxTier":8},{"id":587,"name":"急速冰冻等级","maxTier":8},{"id":589,"name":"斥责等级","maxTier":8},{"id":590,"name":"召唤剑齿虎等级","maxTier":8},{"id":591,"name":"召唤毒蝎等级","maxTier":8},{"id":594,"name":"收割等级","maxTier":8},{"id":596,"name":"审判等级","maxTier":8},{"id":599,"name":"雪崩等级","maxTier":8},{"id":600,"name":"希望符号等级","maxTier":8},{"id":601,"name":"神圣光环等级","maxTier":8},{"id":603,"name":"惩戒等级","maxTier":8},{"id":606,"name":"树人形态等级","maxTier":8},{"id":610,"name":"乱舞等级","maxTier":8},{"id":612,"name":"影舞打击等级","maxTier":8},{"id":616,"name":"灰烬打击等级","maxTier":8},{"id":623,"name":"召唤骷髅法师等级","maxTier":8},{"id":624,"name":"静电等级","maxTier":8},{"id":625,"name":"瓦解射线等级","maxTier":8},{"id":628,"name":"火焰护盾等级","maxTier":8},{"id":633,"name":"缝合憎恶等级","maxTier":8},{"id":635,"name":"白骨诅咒等级","maxTier":8},{"id":639,"name":"盾牌猛击等级","maxTier":8},{"id":640,"name":"召唤弩炮等级","maxTier":8},{"id":641,"name":"致命幻影等级","maxTier":8},{"id":644,"name":"震地战吼等级","maxTier":8},{"id":645,"name":"浪涌等级","maxTier":8},{"id":653,"name":"虚空顺势斩等级","maxTier":8},{"id":654,"name":"标枪投掷等级","maxTier":8},{"id":662,"name":"黯影之刃等级","maxTier":8},{"id":683,"name":"冰霜墙等级","maxTier":8},{"id":684,"name":"统治铭文等级","maxTier":8},{"id":709,"name":"冰霜利爪等级","maxTier":8},{"id":730,"name":"空域袭击等级","maxTier":8},{"id":731,"name":"绳网等级","maxTier":8},{"id":732,"name":"亵渎帷幕等级","maxTier":8},{"id":1091,"name":"暗影劈裂等级","maxTier":8}],"suffix":[{"id":7,"name":"虚空抗性","maxTier":8},{"id":10,"name":"腐化抗性","maxTier":8},{"id":13,"name":"火焰抗性","maxTier":8},{"id":17,"name":"冰霜抗性","maxTier":8},{"id":19,"name":"毒素抗性","maxTier":8},{"id":22,"name":"生命再生","maxTier":8},{"id":24,"name":"闪电抗性","maxTier":8},{"id":25,"name":"生命","maxTier":8},{"id":45,"name":"物理抗性","maxTier":8},{"id":80,"name":"元素抗性","maxTier":8},{"id":92,"name":"耐伤","maxTier":8},{"id":104,"name":"引导期间所有抗性","maxTier":8},{"id":429,"name":"击中时施加虚弱几率","maxTier":8},{"id":825,"name":"增加生命与生命再生","maxTier":8}]},"弓":{"prefix":[{"id":5,"name":"暴击几率","maxTier":8},{"id":6,"name":"暴击伤害加成","maxTier":8},{"id":12,"name":"火焰伤害","maxTier":8},{"id":16,"name":"冰霜伤害","maxTier":8},{"id":23,"name":"闪电伤害","maxTier":8},{"id":30,"name":"物理伤害","maxTier":8},{"id":61,"name":"毒素伤害","maxTier":8},{"id":72,"name":"持续伤害","maxTier":8},{"id":431,"name":"弓箭伤害","maxTier":8},{"id":432,"name":"弓箭攻击速度","maxTier":8},{"id":433,"name":"弓箭物理伤害","maxTier":8},{"id":434,"name":"弓箭火焰伤害","maxTier":8},{"id":669,"name":"弓闪电伤害","maxTier":8},{"id":670,"name":"弓寒冷伤害","maxTier":8},{"id":672,"name":"暴击率和弓攻击速度","maxTier":8}],"suffix":[{"id":20,"name":"击杀时恢复生命","maxTier":8},{"id":54,"name":"击中时施加中毒几率","maxTier":8},{"id":55,"name":"击中时施加点燃几率","maxTier":8},{"id":56,"name":"击中时施加冰缓几率","maxTier":8},{"id":57,"name":"击中时施加迟缓几率","maxTier":8},{"id":58,"name":"提高晕眩几率","maxTier":8},{"id":60,"name":"击中时施加致盲几率","maxTier":8},{"id":68,"name":"击中时施加流血几率","maxTier":8},{"id":85,"name":"击中时施加感电几率","maxTier":8},{"id":86,"name":"几率粉碎护甲于击中时","maxTier":8},{"id":64,"name":"召唤物近战与弓箭伤害","maxTier":8},{"id":719,"name":"你与你的召唤物物理抗性穿透","maxTier":8},{"id":720,"name":"你与你的召唤物火焰抗性穿透","maxTier":8},{"id":721,"name":"你与你的召唤物冰霜抗性穿透","maxTier":8},{"id":722,"name":"你与你的召唤物闪电抗性穿透","maxTier":8},{"id":723,"name":"你与你的召唤物虚空抗性穿透","maxTier":8},{"id":725,"name":"你与你的召唤物毒素抗性穿透","maxTier":8}]}};
+
+// ===== Equipment Data (extracted from game files) =====
+const EQUIPMENT_DATA = {
+  "头盔": [
+    {
+      "id": "0_8",
+      "name": "流亡者护盔",
+      "levelReq": 0
+    },
+    {
+      "id": "0_9",
+      "name": "骨制面具",
+      "levelReq": 3
+    },
+    {
+      "id": "0_10",
+      "name": "头骨护盔",
+      "levelReq": 6
+    },
+    {
+      "id": "0_11",
+      "name": "死亡面具",
+      "levelReq": 13
+    },
+    {
+      "id": "0_12",
+      "name": "恶魔风帽",
+      "levelReq": 29
+    },
+    {
+      "id": "0_13",
+      "name": "葬仪面具",
+      "levelReq": 51
+    },
+    {
+      "id": "0_14",
+      "name": "亵渎头冠",
+      "levelReq": 60
+    },
+    {
+      "id": "0_15",
+      "name": "亡魂面具",
+      "levelReq": 66
+    },
+    {
+      "id": "0_16",
+      "name": "铜制头环",
+      "levelReq": 0
+    },
+    {
+      "id": "0_17",
+      "name": "行家头盔",
+      "levelReq": 3
+    },
+    {
+      "id": "0_18",
+      "name": "守护者头盔",
+      "levelReq": 6
+    },
+    {
+      "id": "0_19",
+      "name": "神殿面纱",
+      "levelReq": 22
+    },
+    {
+      "id": "0_20",
+      "name": "银月头盔",
+      "levelReq": 33
+    },
+    {
+      "id": "0_21",
+      "name": "奥秘头盔",
+      "levelReq": 50
+    },
+    {
+      "id": "0_22",
+      "name": "天神头盔",
+      "levelReq": 56
+    },
+    {
+      "id": "0_23",
+      "name": "符文面罩",
+      "levelReq": 63
+    },
+    {
+      "id": "0_24",
+      "name": "橡木头盔",
+      "levelReq": 0
+    },
+    {
+      "id": "0_25",
+      "name": "野狼皮帽",
+      "levelReq": 7
+    },
+    {
+      "id": "0_26",
+      "name": "森林风帽",
+      "levelReq": 13
+    },
+    {
+      "id": "0_27",
+      "name": "壳制头盔",
+      "levelReq": 21
+    },
+    {
+      "id": "0_28",
+      "name": "迅猛龙头盔",
+      "levelReq": 30
+    },
+    {
+      "id": "0_29",
+      "name": "冰狼皮帽",
+      "levelReq": 58
+    },
+    {
+      "id": "0_30",
+      "name": "黑狼皮帽",
+      "levelReq": 58
+    },
+    {
+      "id": "0_31",
+      "name": "原木面罩",
+      "levelReq": 64
+    },
+    {
+      "id": "0_32",
+      "name": "皮制头盔",
+      "levelReq": 0
+    },
+    {
+      "id": "0_33",
+      "name": "步兵头盔",
+      "levelReq": 3
+    },
+    {
+      "id": "0_34",
+      "name": "铁制面甲",
+      "levelReq": 12
+    },
+    {
+      "id": "0_35",
+      "name": "全覆式头盔",
+      "levelReq": 20
+    },
+    {
+      "id": "0_36",
+      "name": "翼盔",
+      "levelReq": 40
+    },
+    {
+      "id": "0_37",
+      "name": "追随者头盔",
+      "levelReq": 51
+    },
+    {
+      "id": "0_38",
+      "name": "预兆头盔",
+      "levelReq": 60
+    },
+    {
+      "id": "0_39",
+      "name": "太阳之城重盔",
+      "levelReq": 72
+    },
+    {
+      "id": "0_40",
+      "name": "暴君头冠",
+      "levelReq": 75
+    },
+    {
+      "id": "0_41",
+      "name": "獠牙重盔",
+      "levelReq": 73
+    },
+    {
+      "id": "0_42",
+      "name": "布兜帽",
+      "levelReq": 0
+    },
+    {
+      "id": "0_43",
+      "name": "皮制面具",
+      "levelReq": 3
+    },
+    {
+      "id": "0_44",
+      "name": "强盗头盔",
+      "levelReq": 5
+    },
+    {
+      "id": "0_45",
+      "name": "流亡者帽子",
+      "levelReq": 24
+    },
+    {
+      "id": "0_46",
+      "name": "具角头盔",
+      "levelReq": 28
+    },
+    {
+      "id": "0_47",
+      "name": "黯影兜帽",
+      "levelReq": 37
+    },
+    {
+      "id": "0_48",
+      "name": "流放者帽子",
+      "levelReq": 45
+    },
+    {
+      "id": "0_49",
+      "name": "尖顶头盔",
+      "levelReq": 60
+    },
+    {
+      "id": "0_50",
+      "name": "驯鹰头盔",
+      "levelReq": 68
+    },
+    {
+      "id": "0_51",
+      "name": "大墓地头盔",
+      "levelReq": 73
+    },
+    {
+      "id": "0_52",
+      "name": "恐惧头冠",
+      "levelReq": 80
+    },
+    {
+      "id": "0_53",
+      "name": "禽鸟头盔",
+      "levelReq": 3
+    },
+    {
+      "id": "0_54",
+      "name": "科尔海姆风帽",
+      "levelReq": 43
+    },
+    {
+      "id": "0_55",
+      "name": "梅鲁纳头盔",
+      "levelReq": 51
+    },
+    {
+      "id": "0_56",
+      "name": "先祖王冠",
+      "levelReq": 86
+    },
+    {
+      "id": "0_57",
+      "name": "风化王冠",
+      "levelReq": 14
+    },
+    {
+      "id": "0_58",
+      "name": "奥术面罩",
+      "levelReq": 84
+    },
+    {
+      "id": "0_59",
+      "name": "竞技场头盔",
+      "levelReq": 6
+    },
+    {
+      "id": "0_60",
+      "name": "尖刺头盔",
+      "levelReq": 27
+    },
+    {
+      "id": "0_61",
+      "name": "狮子重盔",
+      "levelReq": 85
+    },
+    {
+      "id": "0_62",
+      "name": "巫师帽子",
+      "levelReq": 21
+    },
+    {
+      "id": "0_63",
+      "name": "女巫帽子",
+      "levelReq": 39
+    },
+    {
+      "id": "0_64",
+      "name": "不朽头冠",
+      "levelReq": 79
+    },
+    {
+      "id": "0_65",
+      "name": "格罗皮兜帽",
+      "levelReq": 12
+    },
+    {
+      "id": "0_66",
+      "name": "蛇鳞克星恐怖面具",
+      "levelReq": 53
+    },
+    {
+      "id": "0_67",
+      "name": "血腥面罩",
+      "levelReq": 74
+    },
+    {
+      "id": "0_68",
+      "name": "巨龙面罩",
+      "levelReq": 81
+    },
+    {
+      "id": "0_69",
+      "name": "戈尔贡鳞片护盔",
+      "levelReq": 86
+    },
+    {
+      "id": "0_70",
+      "name": "渡鸦头冠",
+      "levelReq": 85
+    }
+  ],
+  "胸甲": [
+    {
+      "id": "1_8",
+      "name": "流亡者破布",
+      "levelReq": 0
+    },
+    {
+      "id": "1_9",
+      "name": "异教徒服饰",
+      "levelReq": 1
+    },
+    {
+      "id": "1_10",
+      "name": "新人长袍",
+      "levelReq": 4
+    },
+    {
+      "id": "1_11",
+      "name": "罗纹胸铠",
+      "levelReq": 12
+    },
+    {
+      "id": "1_12",
+      "name": "恶魔长袍",
+      "levelReq": 27
+    },
+    {
+      "id": "1_13",
+      "name": "葬仪板甲",
+      "levelReq": 53
+    },
+    {
+      "id": "1_14",
+      "name": "亵渎华服",
+      "levelReq": 61
+    },
+    {
+      "id": "1_15",
+      "name": "亡魂板甲",
+      "levelReq": 66
+    },
+    {
+      "id": "1_16",
+      "name": "旅行大衣",
+      "levelReq": 0
+    },
+    {
+      "id": "1_17",
+      "name": "行家长袍",
+      "levelReq": 0
+    },
+    {
+      "id": "1_18",
+      "name": "档案长袍",
+      "levelReq": 12
+    },
+    {
+      "id": "1_19",
+      "name": "神殿服饰",
+      "levelReq": 21
+    },
+    {
+      "id": "1_20",
+      "name": "华丽长袍",
+      "levelReq": 40
+    },
+    {
+      "id": "1_21",
+      "name": "奥秘板甲",
+      "levelReq": 52
+    },
+    {
+      "id": "1_22",
+      "name": "天神衣饰",
+      "levelReq": 60
+    },
+    {
+      "id": "1_23",
+      "name": "沃考尔华服",
+      "levelReq": 64
+    },
+    {
+      "id": "1_24",
+      "name": "毛皮胸甲",
+      "levelReq": 0
+    },
+    {
+      "id": "1_25",
+      "name": "橡木胸甲",
+      "levelReq": 0
+    },
+    {
+      "id": "1_26",
+      "name": "森林服饰",
+      "levelReq": 14
+    },
+    {
+      "id": "1_27",
+      "name": "冰狼服饰",
+      "levelReq": 29
+    },
+    {
+      "id": "1_28",
+      "name": "萨满服饰",
+      "levelReq": 36
+    },
+    {
+      "id": "1_29",
+      "name": "科尔海姆胸甲",
+      "levelReq": 46
+    },
+    {
+      "id": "1_30",
+      "name": "梅鲁纳甲胄",
+      "levelReq": 52
+    },
+    {
+      "id": "1_31",
+      "name": "原木大衣",
+      "levelReq": 63
+    },
+    {
+      "id": "1_32",
+      "name": "链环锁甲",
+      "levelReq": 0
+    },
+    {
+      "id": "1_33",
+      "name": "步兵锁甲",
+      "levelReq": 0
+    },
+    {
+      "id": "1_34",
+      "name": "铁制胸铠",
+      "levelReq": 13
+    },
+    {
+      "id": "1_35",
+      "name": "全身板甲",
+      "levelReq": 19
+    },
+    {
+      "id": "1_36",
+      "name": "贵族板甲",
+      "levelReq": 42
+    },
+    {
+      "id": "1_37",
+      "name": "追随者板甲",
+      "levelReq": 53
+    },
+    {
+      "id": "1_38",
+      "name": "预兆板甲",
+      "levelReq": 59
+    },
+    {
+      "id": "1_39",
+      "name": "太阳之城板甲",
+      "levelReq": 68
+    },
+    {
+      "id": "1_40",
+      "name": "启示板甲",
+      "levelReq": 79
+    },
+    {
+      "id": "1_41",
+      "name": "暴君华服",
+      "levelReq": 77
+    },
+    {
+      "id": "1_42",
+      "name": "先祖服饰",
+      "levelReq": 76
+    },
+    {
+      "id": "1_43",
+      "name": "布制胸甲",
+      "levelReq": 0
+    },
+    {
+      "id": "1_44",
+      "name": "皮制锁甲",
+      "levelReq": 0
+    },
+    {
+      "id": "1_45",
+      "name": "强盗服饰",
+      "levelReq": 6
+    },
+    {
+      "id": "1_46",
+      "name": "流亡者大衣",
+      "levelReq": 23
+    },
+    {
+      "id": "1_47",
+      "name": "镶片胸甲",
+      "levelReq": 27
+    },
+    {
+      "id": "1_48",
+      "name": "黯影大衣",
+      "levelReq": 39
+    },
+    {
+      "id": "1_49",
+      "name": "流放者大衣",
+      "levelReq": 44
+    },
+    {
+      "id": "1_50",
+      "name": "精英华服",
+      "levelReq": 61
+    },
+    {
+      "id": "1_51",
+      "name": "驯鹰胸甲",
+      "levelReq": 67
+    },
+    {
+      "id": "1_52",
+      "name": "大墓地板甲",
+      "levelReq": 71
+    },
+    {
+      "id": "1_53",
+      "name": "禽鸟服饰",
+      "levelReq": 6
+    },
+    {
+      "id": "1_54",
+      "name": "壳制甲胄",
+      "levelReq": 22
+    },
+    {
+      "id": "1_55",
+      "name": "野兽链甲",
+      "levelReq": 70
+    },
+    {
+      "id": "1_56",
+      "name": "守护者衣饰",
+      "levelReq": 5
+    },
+    {
+      "id": "1_57",
+      "name": "银月衣饰",
+      "levelReq": 30
+    },
+    {
+      "id": "1_58",
+      "name": "奥术华服",
+      "levelReq": 87
+    },
+    {
+      "id": "1_59",
+      "name": "破旧板甲",
+      "levelReq": 4
+    },
+    {
+      "id": "1_60",
+      "name": "熔炉板甲",
+      "levelReq": 29
+    },
+    {
+      "id": "1_61",
+      "name": "勇士华服",
+      "levelReq": 86
+    },
+    {
+      "id": "1_62",
+      "name": "巫师长袍",
+      "levelReq": 29
+    },
+    {
+      "id": "1_63",
+      "name": "女巫长袍",
+      "levelReq": 41
+    },
+    {
+      "id": "1_64",
+      "name": "不朽华服",
+      "levelReq": 77
+    },
+    {
+      "id": "1_65",
+      "name": "格罗皮大衣",
+      "levelReq": 11
+    },
+    {
+      "id": "1_66",
+      "name": "蛇鳞克星大衣",
+      "levelReq": 54
+    },
+    {
+      "id": "1_67",
+      "name": "地龙皮大衣",
+      "levelReq": 73
+    },
+    {
+      "id": "1_68",
+      "name": "龙皮大衣",
+      "levelReq": 80
+    },
+    {
+      "id": "1_69",
+      "name": "戈尔贡鳞片大衣",
+      "levelReq": 85
+    },
+    {
+      "id": "1_70",
+      "name": "血腥华服",
+      "levelReq": 84
+    }
+  ],
+  "腰带": [
+    {
+      "id": "2_0",
+      "name": "饰带",
+      "levelReq": 0
+    },
+    {
+      "id": "2_1",
+      "name": "皮腰带",
+      "levelReq": 9
+    },
+    {
+      "id": "2_2",
+      "name": "镀层腰带",
+      "levelReq": 19
+    },
+    {
+      "id": "2_4",
+      "name": "铁链腰带",
+      "levelReq": 31
+    },
+    {
+      "id": "2_5",
+      "name": "游牧民腰带",
+      "levelReq": 45
+    },
+    {
+      "id": "2_6",
+      "name": "贵族饰带",
+      "levelReq": 14
+    },
+    {
+      "id": "2_7",
+      "name": "蛛丝饰带",
+      "levelReq": 58
+    },
+    {
+      "id": "2_8",
+      "name": "禁卫腰带",
+      "levelReq": 66
+    },
+    {
+      "id": "2_9",
+      "name": "鹰首人腰带",
+      "levelReq": 73
+    },
+    {
+      "id": "2_10",
+      "name": "神圣束腰",
+      "levelReq": 80
+    }
+  ],
+  "靴子": [
+    {
+      "id": "3_0",
+      "name": "毛皮靴子",
+      "levelReq": 0
+    },
+    {
+      "id": "3_1",
+      "name": "皮靴",
+      "levelReq": 8
+    },
+    {
+      "id": "3_2",
+      "name": "铁制护胫",
+      "levelReq": 16
+    },
+    {
+      "id": "3_3",
+      "name": "流亡者靴子",
+      "levelReq": 23
+    },
+    {
+      "id": "3_4",
+      "name": "镶片靴子",
+      "levelReq": 30
+    },
+    {
+      "id": "3_5",
+      "name": "赫伯利亚靴子",
+      "levelReq": 45
+    },
+    {
+      "id": "3_6",
+      "name": "太阳之城护胫",
+      "levelReq": 67
+    },
+    {
+      "id": "3_8",
+      "name": "神殿靴子",
+      "levelReq": 55
+    },
+    {
+      "id": "3_9",
+      "name": "奥术靴子",
+      "levelReq": 60
+    },
+    {
+      "id": "3_10",
+      "name": "先锋靴子",
+      "levelReq": 76
+    },
+    {
+      "id": "3_11",
+      "name": "城堡靴子",
+      "levelReq": 85
+    }
+  ],
+  "手套": [
+    {
+      "id": "4_0",
+      "name": "毛皮手套",
+      "levelReq": 0
+    },
+    {
+      "id": "4_1",
+      "name": "皮手套",
+      "levelReq": 6
+    },
+    {
+      "id": "4_2",
+      "name": "甲片护腕",
+      "levelReq": 15
+    },
+    {
+      "id": "4_3",
+      "name": "流亡者手套",
+      "levelReq": 25
+    },
+    {
+      "id": "4_4",
+      "name": "贵族手套",
+      "levelReq": 31
+    },
+    {
+      "id": "4_5",
+      "name": "镀层臂铠",
+      "levelReq": 45
+    },
+    {
+      "id": "4_6",
+      "name": "太阳之城护腕",
+      "levelReq": 62
+    },
+    {
+      "id": "4_7",
+      "name": "圣教军臂铠",
+      "levelReq": 64
+    },
+    {
+      "id": "4_10",
+      "name": "奥术护腕",
+      "levelReq": 54
+    },
+    {
+      "id": "4_11",
+      "name": "苦修者手套",
+      "levelReq": 79
+    },
+    {
+      "id": "4_12",
+      "name": "永恒臂铠",
+      "levelReq": 86
+    }
+  ],
+  "单手斧": [
+    {
+      "id": "5_0",
+      "name": "短柄小斧",
+      "levelReq": 0
+    },
+    {
+      "id": "5_1",
+      "name": "尖嘴镐",
+      "levelReq": 6
+    },
+    {
+      "id": "5_2",
+      "name": "生锈屠刀",
+      "levelReq": 12
+    },
+    {
+      "id": "5_3",
+      "name": "战斗斧",
+      "levelReq": 24
+    },
+    {
+      "id": "5_4",
+      "name": "镰刀",
+      "levelReq": 35
+    },
+    {
+      "id": "5_5",
+      "name": "温加里之斧",
+      "levelReq": 46
+    },
+    {
+      "id": "5_6",
+      "name": "月牙斧",
+      "levelReq": 51
+    },
+    {
+      "id": "5_7",
+      "name": "壳质利爪",
+      "levelReq": 59
+    },
+    {
+      "id": "5_8",
+      "name": "鹰翼斧",
+      "levelReq": 63
+    },
+    {
+      "id": "5_9",
+      "name": "狩魂镰刀",
+      "levelReq": 66
+    },
+    {
+      "id": "5_10",
+      "name": "暗影屠刀",
+      "levelReq": 71
+    },
+    {
+      "id": "5_11",
+      "name": "龙骨斧",
+      "levelReq": 80
+    }
+  ],
+  "匕首": [
+    {
+      "id": "6_0",
+      "name": "锐匕",
+      "levelReq": 0
+    },
+    {
+      "id": "6_1",
+      "name": "祭祀小刀",
+      "levelReq": 12
+    },
+    {
+      "id": "6_2",
+      "name": "骨制匕首",
+      "levelReq": 25
+    },
+    {
+      "id": "6_3",
+      "name": "波形匕首",
+      "levelReq": 27
+    },
+    {
+      "id": "6_4",
+      "name": "狩猎小刀",
+      "levelReq": 44
+    },
+    {
+      "id": "6_5",
+      "name": "弯月匕首",
+      "levelReq": 51
+    },
+    {
+      "id": "6_6",
+      "name": "蛇神匕首",
+      "levelReq": 55
+    },
+    {
+      "id": "6_7",
+      "name": "符文匕首",
+      "levelReq": 61
+    },
+    {
+      "id": "6_8",
+      "name": "十手短刀",
+      "levelReq": 65
+    },
+    {
+      "id": "6_9",
+      "name": "壳质匕首",
+      "levelReq": 68
+    },
+    {
+      "id": "6_10",
+      "name": "黑曜石匕首",
+      "levelReq": 71
+    }
+  ],
+  "单手锤": [
+    {
+      "id": "7_0",
+      "name": "棍棒",
+      "levelReq": 0
+    },
+    {
+      "id": "7_1",
+      "name": "铁锤",
+      "levelReq": 8
+    },
+    {
+      "id": "7_2",
+      "name": "凸缘钉头锤",
+      "levelReq": 18
+    },
+    {
+      "id": "7_3",
+      "name": "晨星锤",
+      "levelReq": 29
+    },
+    {
+      "id": "7_4",
+      "name": "鹤嘴锤",
+      "levelReq": 37
+    },
+    {
+      "id": "7_5",
+      "name": "象牙棍",
+      "levelReq": 45
+    },
+    {
+      "id": "7_6",
+      "name": "海胆锤",
+      "levelReq": 50
+    },
+    {
+      "id": "7_7",
+      "name": "蛇锤",
+      "levelReq": 54
+    },
+    {
+      "id": "7_8",
+      "name": "太阳之城战锤",
+      "levelReq": 62
+    },
+    {
+      "id": "7_9",
+      "name": "厄星锤",
+      "levelReq": 70
+    },
+    {
+      "id": "7_10",
+      "name": "符文锤",
+      "levelReq": 78
+    }
+  ],
+  "权杖": [
+    {
+      "id": "8_0",
+      "name": "铜制权杖",
+      "levelReq": 0
+    },
+    {
+      "id": "8_1",
+      "name": "冰霜权杖",
+      "levelReq": 43
+    },
+    {
+      "id": "8_2",
+      "name": "华丽权杖",
+      "levelReq": 35
+    },
+    {
+      "id": "8_3",
+      "name": "信徒权杖",
+      "levelReq": 11
+    },
+    {
+      "id": "8_4",
+      "name": "橡木权杖",
+      "levelReq": 21
+    },
+    {
+      "id": "8_5",
+      "name": "黄金权杖",
+      "levelReq": 52
+    },
+    {
+      "id": "8_6",
+      "name": "白银权杖",
+      "levelReq": 63
+    },
+    {
+      "id": "8_8",
+      "name": "黑曜石权杖",
+      "levelReq": 75
+    },
+    {
+      "id": "8_9",
+      "name": "骸骨权杖",
+      "levelReq": 67
+    }
+  ],
+  "单手剑": [
+    {
+      "id": "9_0",
+      "name": "断剑",
+      "levelReq": 5
+    },
+    {
+      "id": "9_1",
+      "name": "阔剑",
+      "levelReq": 20
+    },
+    {
+      "id": "9_2",
+      "name": "锈蚀之刃",
+      "levelReq": 39
+    },
+    {
+      "id": "9_3",
+      "name": "角斗士短剑",
+      "levelReq": 0
+    },
+    {
+      "id": "9_4",
+      "name": "信徒之刃",
+      "levelReq": 15
+    },
+    {
+      "id": "9_5",
+      "name": "弯刃大刀",
+      "levelReq": 30
+    },
+    {
+      "id": "9_6",
+      "name": "长剑",
+      "levelReq": 50
+    },
+    {
+      "id": "9_7",
+      "name": "蛇人弯刀",
+      "levelReq": 54
+    },
+    {
+      "id": "9_8",
+      "name": "水晶剑",
+      "levelReq": 64
+    },
+    {
+      "id": "9_9",
+      "name": "武士刀",
+      "levelReq": 70
+    },
+    {
+      "id": "9_10",
+      "name": "黎明之刃",
+      "levelReq": 75
+    }
+  ],
+  "魔杖": [
+    {
+      "id": "10_0",
+      "name": "珊瑚魔杖",
+      "levelReq": 51
+    },
+    {
+      "id": "10_1",
+      "name": "花楸魔杖",
+      "levelReq": 0
+    },
+    {
+      "id": "10_2",
+      "name": "档案魔杖",
+      "levelReq": 5
+    },
+    {
+      "id": "10_3",
+      "name": "华丽魔杖",
+      "levelReq": 55
+    },
+    {
+      "id": "10_4",
+      "name": "树人枝杈",
+      "levelReq": 47
+    },
+    {
+      "id": "10_5",
+      "name": "仪式木杖",
+      "levelReq": 14
+    },
+    {
+      "id": "10_6",
+      "name": "象牙魔杖",
+      "levelReq": 31
+    },
+    {
+      "id": "10_7",
+      "name": "桦木魔杖",
+      "levelReq": 20
+    },
+    {
+      "id": "10_8",
+      "name": "亵渎魔杖",
+      "levelReq": 67
+    },
+    {
+      "id": "10_9",
+      "name": "水晶魔杖",
+      "levelReq": 60
+    },
+    {
+      "id": "10_10",
+      "name": "龙角魔杖",
+      "levelReq": 77
+    }
+  ],
+  "双手斧": [
+    {
+      "id": "12_0",
+      "name": "伐木斧",
+      "levelReq": 0
+    },
+    {
+      "id": "12_1",
+      "name": "庇护斧",
+      "levelReq": 5
+    },
+    {
+      "id": "12_2",
+      "name": "信徒斩斧",
+      "levelReq": 14
+    },
+    {
+      "id": "12_3",
+      "name": "钩镰斧",
+      "levelReq": 21
+    },
+    {
+      "id": "12_4",
+      "name": "帝国戟",
+      "levelReq": 33
+    },
+    {
+      "id": "12_5",
+      "name": "冰霜斧",
+      "levelReq": 47
+    },
+    {
+      "id": "12_6",
+      "name": "巨斧",
+      "levelReq": 54
+    },
+    {
+      "id": "12_7",
+      "name": "碧玉斩斧",
+      "levelReq": 62
+    },
+    {
+      "id": "12_8",
+      "name": "黑曜石斧",
+      "levelReq": 64
+    },
+    {
+      "id": "12_9",
+      "name": "骨镰",
+      "levelReq": 66
+    },
+    {
+      "id": "12_10",
+      "name": "月牙砍刀",
+      "levelReq": 71
+    },
+    {
+      "id": "12_11",
+      "name": "璀璨斧",
+      "levelReq": 76
+    }
+  ],
+  "双手锤": [
+    {
+      "id": "13_0",
+      "name": "巨锤",
+      "levelReq": 0
+    },
+    {
+      "id": "13_1",
+      "name": "尖刺巨棒",
+      "levelReq": 7
+    },
+    {
+      "id": "13_2",
+      "name": "大槌",
+      "levelReq": 19
+    },
+    {
+      "id": "13_3",
+      "name": "尖刺大槌",
+      "levelReq": 28
+    },
+    {
+      "id": "13_4",
+      "name": "巨型棍棒",
+      "levelReq": 39
+    },
+    {
+      "id": "13_5",
+      "name": "双手大锤",
+      "levelReq": 52
+    },
+    {
+      "id": "13_6",
+      "name": "泰坦股骨",
+      "levelReq": 58
+    },
+    {
+      "id": "13_7",
+      "name": "恐惧之锤",
+      "levelReq": 66
+    },
+    {
+      "id": "13_8",
+      "name": "琉森锤",
+      "levelReq": 74
+    },
+    {
+      "id": "13_9",
+      "name": "象头锤",
+      "levelReq": 78
+    }
+  ],
+  "长矛": [
+    {
+      "id": "14_0",
+      "name": "长矛",
+      "levelReq": 6
+    },
+    {
+      "id": "14_1",
+      "name": "短矛",
+      "levelReq": 0
+    },
+    {
+      "id": "14_2",
+      "name": "冰矛",
+      "levelReq": 46
+    },
+    {
+      "id": "14_3",
+      "name": "尖刺矛",
+      "levelReq": 16
+    },
+    {
+      "id": "14_4",
+      "name": "三叉戟",
+      "levelReq": 51
+    },
+    {
+      "id": "14_5",
+      "name": "宽刃长刀",
+      "levelReq": 29
+    },
+    {
+      "id": "14_6",
+      "name": "十文字枪",
+      "levelReq": 22
+    },
+    {
+      "id": "14_7",
+      "name": "屠龙戟",
+      "levelReq": 76
+    },
+    {
+      "id": "14_8",
+      "name": "弑神之矛",
+      "levelReq": 82
+    },
+    {
+      "id": "14_9",
+      "name": "太阳之矛",
+      "levelReq": 63
+    },
+    {
+      "id": "14_10",
+      "name": "长柄挖钩",
+      "levelReq": 38
+    },
+    {
+      "id": "14_11",
+      "name": "盘绕双尖枪",
+      "levelReq": 56
+    },
+    {
+      "id": "14_12",
+      "name": "黑曜石长矛",
+      "levelReq": 68
+    }
+  ],
+  "长杖": [
+    {
+      "id": "15_0",
+      "name": "旅行长杖",
+      "levelReq": 0
+    },
+    {
+      "id": "15_1",
+      "name": "根须长杖",
+      "levelReq": 6
+    },
+    {
+      "id": "15_2",
+      "name": "祭祀长杖",
+      "levelReq": 13
+    },
+    {
+      "id": "15_3",
+      "name": "六尺长杖",
+      "levelReq": 23
+    },
+    {
+      "id": "15_4",
+      "name": "帝国长杖",
+      "levelReq": 29
+    },
+    {
+      "id": "15_5",
+      "name": "脊骨手杖",
+      "levelReq": 38
+    },
+    {
+      "id": "15_6",
+      "name": "萨满长杖",
+      "levelReq": 46
+    },
+    {
+      "id": "15_7",
+      "name": "月牙长杖",
+      "levelReq": 50
+    },
+    {
+      "id": "15_8",
+      "name": "水晶长杖",
+      "levelReq": 58
+    },
+    {
+      "id": "15_9",
+      "name": "具角长杖",
+      "levelReq": 66
+    },
+    {
+      "id": "15_10",
+      "name": "神殿长杖",
+      "levelReq": 70
+    },
+    {
+      "id": "15_11",
+      "name": "刀刃长杖",
+      "levelReq": 74
+    },
+    {
+      "id": "15_12",
+      "name": "扇刃长杖",
+      "levelReq": 80
+    },
+    {
+      "id": "15_13",
+      "name": "龙型长杖",
+      "levelReq": 85
+    }
+  ],
+  "双手剑": [
+    {
+      "id": "16_0",
+      "name": "手半剑",
+      "levelReq": 0
+    },
+    {
+      "id": "16_1",
+      "name": "分刃巨剑",
+      "levelReq": 10
+    },
+    {
+      "id": "16_2",
+      "name": "帝国战刃",
+      "levelReq": 24
+    },
+    {
+      "id": "16_3",
+      "name": "镰状剑",
+      "levelReq": 36
+    },
+    {
+      "id": "16_4",
+      "name": "大剑",
+      "levelReq": 46
+    },
+    {
+      "id": "16_5",
+      "name": "大太刀",
+      "levelReq": 56
+    },
+    {
+      "id": "16_6",
+      "name": "翼柄剑",
+      "levelReq": 61
+    },
+    {
+      "id": "16_7",
+      "name": "焰形大剑",
+      "levelReq": 70
+    },
+    {
+      "id": "16_8",
+      "name": "空心刃",
+      "levelReq": 77
+    },
+    {
+      "id": "16_9",
+      "name": "双手巨剑",
+      "levelReq": 80
+    }
+  ],
+  "箭袋": [
+    {
+      "id": "17_0",
+      "name": "轻型箭袋",
+      "levelReq": 0
+    },
+    {
+      "id": "17_1",
+      "name": "重型箭袋",
+      "levelReq": 7
+    },
+    {
+      "id": "17_2",
+      "name": "象牙箭袋",
+      "levelReq": 23
+    },
+    {
+      "id": "17_3",
+      "name": "游牧民箭袋",
+      "levelReq": 44
+    },
+    {
+      "id": "17_4",
+      "name": "遥远林地箭袋",
+      "levelReq": 48
+    },
+    {
+      "id": "17_5",
+      "name": "斯卡尼尔箭袋",
+      "levelReq": 52
+    },
+    {
+      "id": "17_6",
+      "name": "娜迦沙箭袋",
+      "levelReq": 65
+    },
+    {
+      "id": "17_7",
+      "name": "蛛丝箭袋",
+      "levelReq": 68
+    },
+    {
+      "id": "17_8",
+      "name": "钢织箭袋",
+      "levelReq": 77
+    }
+  ],
+  "盾牌": [
+    {
+      "id": "18_0",
+      "name": "木盾",
+      "levelReq": 0
+    },
+    {
+      "id": "18_1",
+      "name": "团牌",
+      "levelReq": 3
+    },
+    {
+      "id": "18_2",
+      "name": "熨斗形盾",
+      "levelReq": 15
+    },
+    {
+      "id": "18_4",
+      "name": "骑士盾",
+      "levelReq": 24
+    },
+    {
+      "id": "18_5",
+      "name": "塔盾",
+      "levelReq": 30
+    },
+    {
+      "id": "18_6",
+      "name": "强盗盾",
+      "levelReq": 36
+    },
+    {
+      "id": "18_7",
+      "name": "根须之盾",
+      "levelReq": 41
+    },
+    {
+      "id": "18_8",
+      "name": "霜冻之盾",
+      "levelReq": 45
+    },
+    {
+      "id": "18_9",
+      "name": "鸢形盾",
+      "levelReq": 50
+    },
+    {
+      "id": "18_10",
+      "name": "梅鲁纳之盾",
+      "levelReq": 52
+    },
+    {
+      "id": "18_11",
+      "name": "山之盾",
+      "levelReq": 59
+    },
+    {
+      "id": "18_12",
+      "name": "甲壳盾",
+      "levelReq": 64
+    },
+    {
+      "id": "18_13",
+      "name": "强化玻璃盾",
+      "levelReq": 72
+    },
+    {
+      "id": "18_14",
+      "name": "黎明之盾",
+      "levelReq": 76
+    }
+  ],
+  "法器": [
+    {
+      "id": "19_0",
+      "name": "玻璃法器",
+      "levelReq": 0
+    },
+    {
+      "id": "19_1",
+      "name": "皮革巨著",
+      "levelReq": 4
+    },
+    {
+      "id": "19_2",
+      "name": "仪式石",
+      "levelReq": 12
+    },
+    {
+      "id": "19_3",
+      "name": "烙印头骨",
+      "levelReq": 24
+    },
+    {
+      "id": "19_4",
+      "name": "蓝宝石巨著",
+      "levelReq": 32
+    },
+    {
+      "id": "19_5",
+      "name": "鹰首人头骨",
+      "levelReq": 38
+    },
+    {
+      "id": "19_6",
+      "name": "符文石",
+      "levelReq": 46
+    },
+    {
+      "id": "19_7",
+      "name": "星盘",
+      "levelReq": 50
+    },
+    {
+      "id": "19_8",
+      "name": "华丽焦点",
+      "levelReq": 54
+    },
+    {
+      "id": "19_9",
+      "name": "龙之眼",
+      "levelReq": 62
+    },
+    {
+      "id": "19_10",
+      "name": "血肉巨著",
+      "levelReq": 66
+    },
+    {
+      "id": "19_11",
+      "name": "水晶头骨",
+      "levelReq": 74
+    },
+    {
+      "id": "19_12",
+      "name": "时之盘",
+      "levelReq": 80
+    }
+  ],
+  "护身符": [
+    {
+      "id": "20_0",
+      "name": "紫铜护身符",
+      "levelReq": 18
+    },
+    {
+      "id": "20_1",
+      "name": "碧玉护身符",
+      "levelReq": 4
+    },
+    {
+      "id": "20_2",
+      "name": "银护身符",
+      "levelReq": 24
+    },
+    {
+      "id": "20_3",
+      "name": "黄铜护身符",
+      "levelReq": 4
+    },
+    {
+      "id": "20_4",
+      "name": "绿松石护身符",
+      "levelReq": 36
+    },
+    {
+      "id": "20_5",
+      "name": "红宝石护身符",
+      "levelReq": 0
+    },
+    {
+      "id": "20_6",
+      "name": "蓝宝石护身符",
+      "levelReq": 44
+    },
+    {
+      "id": "20_7",
+      "name": "白骨护身符",
+      "levelReq": 58
+    },
+    {
+      "id": "20_8",
+      "name": "神谕护身符",
+      "levelReq": 76
+    },
+    {
+      "id": "20_9",
+      "name": "金护身符",
+      "levelReq": 71
+    }
+  ],
+  "戒指": [
+    {
+      "id": "21_0",
+      "name": "铜戒指",
+      "levelReq": 14
+    },
+    {
+      "id": "21_1",
+      "name": "红宝石戒指",
+      "levelReq": 62
+    },
+    {
+      "id": "21_2",
+      "name": "蓝宝石戒指",
+      "levelReq": 40
+    },
+    {
+      "id": "21_3",
+      "name": "银戒指",
+      "levelReq": 0
+    },
+    {
+      "id": "21_4",
+      "name": "金戒指",
+      "levelReq": 25
+    },
+    {
+      "id": "21_6",
+      "name": "碧玉戒指",
+      "levelReq": 0
+    },
+    {
+      "id": "21_7",
+      "name": "绿松石戒指",
+      "levelReq": 31
+    },
+    {
+      "id": "21_8",
+      "name": "象牙戒指",
+      "levelReq": 66
+    },
+    {
+      "id": "21_9",
+      "name": "珊瑚戒指",
+      "levelReq": 48
+    },
+    {
+      "id": "21_10",
+      "name": "蛋白石戒指",
+      "levelReq": 52
+    }
+  ],
+  "遗物": [
+    {
+      "id": "22_3",
+      "name": "黄铜圣杯",
+      "levelReq": 0
+    },
+    {
+      "id": "22_4",
+      "name": "白银圣杯",
+      "levelReq": 15
+    },
+    {
+      "id": "22_5",
+      "name": "黄金圣杯",
+      "levelReq": 37
+    },
+    {
+      "id": "22_11",
+      "name": "污损骸骨",
+      "levelReq": 0
+    },
+    {
+      "id": "22_12",
+      "name": "囚禁灵魂",
+      "levelReq": 5
+    },
+    {
+      "id": "22_13",
+      "name": "矮人胆汁",
+      "levelReq": 13
+    },
+    {
+      "id": "22_14",
+      "name": "诅咒骸骨",
+      "levelReq": 33
+    },
+    {
+      "id": "22_15",
+      "name": "符文骸骨",
+      "levelReq": 51
+    },
+    {
+      "id": "22_16",
+      "name": "腐朽矮人",
+      "levelReq": 59
+    },
+    {
+      "id": "22_17",
+      "name": "咒蚀灵魂",
+      "levelReq": 63
+    },
+    {
+      "id": "22_18",
+      "name": "矮人血液",
+      "levelReq": 65
+    },
+    {
+      "id": "22_19",
+      "name": "腐烂灵魂",
+      "levelReq": 71
+    },
+    {
+      "id": "22_20",
+      "name": "符文卷轴",
+      "levelReq": 0
+    },
+    {
+      "id": "22_21",
+      "name": "奥术羽毛笔",
+      "levelReq": 6
+    },
+    {
+      "id": "22_22",
+      "name": "三眼遗物",
+      "levelReq": 12
+    },
+    {
+      "id": "22_23",
+      "name": "书写羽毛笔",
+      "levelReq": 41
+    },
+    {
+      "id": "22_24",
+      "name": "远古卷轴",
+      "levelReq": 52
+    },
+    {
+      "id": "22_25",
+      "name": "窥视之瞳",
+      "levelReq": 58
+    },
+    {
+      "id": "22_26",
+      "name": "守护卷轴",
+      "levelReq": 64
+    },
+    {
+      "id": "22_27",
+      "name": "符文羽毛笔",
+      "levelReq": 72
+    },
+    {
+      "id": "22_28",
+      "name": "长老之瞳",
+      "levelReq": 76
+    },
+    {
+      "id": "22_29",
+      "name": "捕梦网",
+      "levelReq": 0
+    },
+    {
+      "id": "22_30",
+      "name": "睿智鹿角",
+      "levelReq": 4
+    },
+    {
+      "id": "22_31",
+      "name": "鲜活之种",
+      "levelReq": 11
+    },
+    {
+      "id": "22_32",
+      "name": "赭色鹿角",
+      "levelReq": 18
+    },
+    {
+      "id": "22_33",
+      "name": "树人之种",
+      "levelReq": 45
+    },
+    {
+      "id": "22_34",
+      "name": "捕血网",
+      "levelReq": 53
+    },
+    {
+      "id": "22_35",
+      "name": "霜冻种子",
+      "levelReq": 67
+    },
+    {
+      "id": "22_36",
+      "name": "捕灵网",
+      "levelReq": 70
+    },
+    {
+      "id": "22_37",
+      "name": "靛蓝鹿角",
+      "levelReq": 75
+    },
+    {
+      "id": "22_38",
+      "name": "朝霞徽章",
+      "levelReq": 0
+    },
+    {
+      "id": "22_39",
+      "name": "异端文稿",
+      "levelReq": 5
+    },
+    {
+      "id": "22_40",
+      "name": "悲恸旗帜",
+      "levelReq": 12
+    },
+    {
+      "id": "22_41",
+      "name": "铭文碑",
+      "levelReq": 29
+    },
+    {
+      "id": "22_42",
+      "name": "太阳之城旗帜",
+      "levelReq": 44
+    },
+    {
+      "id": "22_43",
+      "name": "太阳戒文碑",
+      "levelReq": 50
+    },
+    {
+      "id": "22_44",
+      "name": "银色饰章",
+      "levelReq": 58
+    },
+    {
+      "id": "22_45",
+      "name": "恐惧旗帜",
+      "levelReq": 63
+    },
+    {
+      "id": "22_46",
+      "name": "污秽雕像",
+      "levelReq": 77
+    },
+    {
+      "id": "22_47",
+      "name": "象牙骰子",
+      "levelReq": 0
+    },
+    {
+      "id": "22_48",
+      "name": "毒液瓶",
+      "levelReq": 4
+    },
+    {
+      "id": "22_49",
+      "name": "风化钱币",
+      "levelReq": 16
+    },
+    {
+      "id": "22_50",
+      "name": "被盗税金",
+      "levelReq": 44
+    },
+    {
+      "id": "22_51",
+      "name": "油瓶",
+      "levelReq": 51
+    },
+    {
+      "id": "22_52",
+      "name": "碧玉骰子",
+      "levelReq": 55
+    },
+    {
+      "id": "22_53",
+      "name": "红宝石骰子",
+      "levelReq": 62
+    },
+    {
+      "id": "22_54",
+      "name": "解毒药剂瓶",
+      "levelReq": 68
+    },
+    {
+      "id": "22_55",
+      "name": "古代钱币",
+      "levelReq": 74
+    }
+  ],
+  "弓": [
+    {
+      "id": "23_0",
+      "name": "短弓",
+      "levelReq": 0
+    },
+    {
+      "id": "23_1",
+      "name": "桦木弓",
+      "levelReq": 6
+    },
+    {
+      "id": "23_2",
+      "name": "临时弓",
+      "levelReq": 13
+    },
+    {
+      "id": "23_3",
+      "name": "帝国弓",
+      "levelReq": 23
+    },
+    {
+      "id": "23_4",
+      "name": "反曲弓",
+      "levelReq": 30
+    },
+    {
+      "id": "23_5",
+      "name": "北境弓",
+      "levelReq": 43
+    },
+    {
+      "id": "23_6",
+      "name": "长弓",
+      "levelReq": 50
+    },
+    {
+      "id": "23_7",
+      "name": "恐棘弓",
+      "levelReq": 58
+    },
+    {
+      "id": "23_8",
+      "name": "蛇形弓",
+      "levelReq": 60
+    },
+    {
+      "id": "23_9",
+      "name": "鹰首人之弓",
+      "levelReq": 62
+    },
+    {
+      "id": "23_10",
+      "name": "黑曜石弓",
+      "levelReq": 72
+    }
+  ]
+};
+
+// ===== State =====
+const state = {
+  current: { category: null, item: null },
+  target:  { category: null, item: null },
+  modalSide: null, // 'current' or 'target'
+  modalActiveCat: null,
+};
+
+// ===== Modal Logic =====
+const overlay = document.getElementById('modalOverlay');
+const modalCats = document.getElementById('modalCats');
+const modalItems = document.getElementById('modalItems');
+const modalSearch = document.getElementById('modalSearch');
+const modalTitle = document.getElementById('modalTitle');
+
+function openModal(side) {
+  state.modalSide = side;
+  overlay.classList.add('open');
+  modalTitle.textContent = side === 'current' ? '选择当前装备基底' : '选择目标装备基底';
+  renderCategories();
+  modalSearch.value = '';
+  modalSearch.focus();
+}
+
+function closeModal() {
+  overlay.classList.remove('open');
+  state.modalSide = null;
+}
+
+document.getElementById('modalClose').addEventListener('click', closeModal);
+overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+
+function getAllCategories() {
+  return Object.keys(EQUIPMENT_DATA);
+}
+
+function getSelectableCategories(side) {
+  if (side === 'target' && state.current.category) {
+    // Target must be same category as current
+    return [state.current.category];
+  }
+  if (side === 'current' && state.target.category) {
+    // If target already selected, current must match
+    return [state.target.category];
+  }
+  return getAllCategories();
+}
+
+function renderCategories() {
+  const side = state.modalSide;
+  const cats = getAllCategories();
+  const selectable = new Set(getSelectableCategories(side));
+  const activeCat = state.modalActiveCat || (side === 'target' && state.current.category ? state.current.category : cats[0]);
+  state.modalActiveCat = selectable.has(activeCat) ? activeCat : [...selectable][0];
+
+  modalCats.innerHTML = '';
+  cats.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'modal-cat-btn' + (cat === state.modalActiveCat ? ' active' : '');
+    if (!selectable.has(cat)) {
+      btn.style.opacity = '0.3';
+      btn.style.pointerEvents = 'none';
+    }
+    const items = EQUIPMENT_DATA[cat] || [];
+    btn.innerHTML = `<span>${cat}</span><span class="count">${items.length}</span>`;
+    btn.addEventListener('click', () => {
+      state.modalActiveCat = cat;
+      renderCategories();
+      renderItems();
+    });
+    modalCats.appendChild(btn);
+  });
+  renderItems();
+}
+
+function renderItems() {
+  const cat = state.modalActiveCat;
+  const items = EQUIPMENT_DATA[cat] || [];
+  const filter = modalSearch.value.trim().toLowerCase();
+  const side = state.modalSide;
+  const selected = side === 'current' ? state.current.item : state.target.item;
+
+  const filtered = filter ? items.filter(i => i.name.toLowerCase().includes(filter)) : items;
+
+  if (filtered.length === 0) {
+    modalItems.innerHTML = '<div class="modal-empty">没有找到匹配的装备</div>';
+    return;
+  }
+
+  modalItems.innerHTML = '';
+  filtered.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'modal-item' + (selected && selected.id === item.id ? ' selected' : '');
+    div.innerHTML = `<span class="item-name">${item.name}</span><span class="item-level">Lv${item.levelReq}</span>`;
+    div.addEventListener('click', () => selectItem(cat, item));
+    modalItems.appendChild(div);
+  });
+}
+
+function selectItem(category, item) {
+  const side = state.modalSide;
+  if (side === 'current') {
+    state.current.category = category;
+    state.current.item = item;
+    updateEquipButton('current');
+    // If target is selected and different category, clear it
+    if (state.target.category && state.target.category !== category) {
+      state.target.category = null;
+      state.target.item = null;
+      updateEquipButton('target');
+    }
+    updateCategoryLock();
+  } else {
+    state.target.category = category;
+    state.target.item = item;
+    updateEquipButton('target');
+  }
+  closeModal();
+}
+
+function updateEquipButton(side) {
+  const btn = document.getElementById(side === 'current' ? 'currentEquipBtn' : 'targetEquipBtn');
+  const data = side === 'current' ? state.current : state.target;
+  if (data.item) {
+    btn.classList.add('has-value');
+    btn.innerHTML = `<span><span class="selected-name">${data.item.name}</span><span class="selected-cat">${data.category}</span></span><span class="arrow">▼</span><span class="equip-clear" title="清除选择">×</span>`;
+  } else {
+    btn.classList.remove('has-value');
+    const placeholder = side === 'current' ? '点击选择装备基底…' : (state.current.category ? `点击选择${state.current.category}…` : '请先选择左侧当前装备…');
+    btn.innerHTML = `<span class="placeholder">${placeholder}</span><span class="arrow">▼</span><span class="equip-clear" title="清除选择">×</span>`;
+  }
+  // Re-bind clear handler
+  const clearBtn = btn.querySelector('.equip-clear');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (side === 'current') {
+        state.current = { category: null, item: null };
+        // Also clear target if different category
+        if (state.target.category) {
+          state.target = { category: null, item: null };
+          updateEquipButton('target');
+        }
+      } else {
+        state.target = { category: null, item: null };
+      }
+      updateEquipButton(side);
+      updateCategoryLock();
+    });
+  }
+}
+
+function updateCategoryLock() {
+  const hint = document.getElementById('categoryLockHint');
+  if (state.current.category) {
+    hint.classList.add('visible');
+    hint.textContent = `🔒 目标装备必须为「${state.current.category}」类别（雕文·嫉妒限制：同部位转换）`;
+  } else {
+    hint.classList.remove('visible');
+  }
+}
+
+// Open modal on button click
+document.getElementById('currentEquipBtn').addEventListener('click', () => openModal('current'));
+document.getElementById('targetEquipBtn').addEventListener('click', () => {
+  if (!state.current.category) {
+    // Flash hint
+    const hint = document.getElementById('categoryLockHint');
+    hint.classList.add('visible');
+    hint.textContent = '⚠️ 请先选择左侧当前装备';
+    hint.style.borderColor = 'rgba(239,68,68,.3)';
+    hint.style.color = '#ef4444';
+    setTimeout(() => { updateCategoryLock(); hint.style.borderColor = ''; hint.style.color = ''; }, 2000);
+    return;
+  }
+  openModal('target');
+});
+
+// Search filter
+modalSearch.addEventListener('input', renderItems);
+
+// ===== Initialize existing affix slots with dropdown behavior =====
+function initAffixDropdowns() {
+  document.querySelectorAll('.affix-slot').forEach(slot => {
+    const input = slot.querySelector('.affix-name-input');
+    const dropdown = slot.querySelector('.affix-dropdown');
+    if (!input || !dropdown) return;
+    
+    const type = slot.querySelector('.affix-type')?.classList.contains('prefix') ? 'prefix' : 'suffix';
+    const panel = slot.closest('.current-panel, .target-panel');
+    const side = panel?.classList.contains('current-panel') ? 'current' : 'target';
+
+    function showDropdown() {
+      const cat = getAffixCategory(side);
+      if (!cat || !AFFIX_DATA[cat]) {
+        dropdown.innerHTML = '<div style="padding:10px; color:var(--text-muted); font-size:12px;">请先选择装备基底</div>';
+        dropdown.style.display = 'block';
+        return;
+      }
+      const affixes = AFFIX_DATA[cat][type] || [];
+      const filter = input.value.trim().toLowerCase();
+      const filtered = filter ? affixes.filter(a => a.name.toLowerCase().includes(filter)) : affixes;
+      
+      if (filtered.length === 0) {
+        dropdown.innerHTML = '<div style="padding:10px; color:var(--text-muted); font-size:12px;">无匹配词缀</div>';
+      } else {
+        dropdown.innerHTML = '';
+        const tierSelect = slot.querySelector('.tier-select');
+        filtered.forEach(affix => {
+          const item = document.createElement('div');
+          item.style.cssText = 'padding:6px 10px; cursor:pointer; font-size:12px; display:flex; justify-content:space-between; color:var(--text-primary);';
+          item.innerHTML = '<span>' + affix.name + '</span><span style="color:var(--text-muted); font-size:11px;">T1-T' + affix.maxTier + '</span>';
+          item.addEventListener('mouseenter', () => item.style.background = 'rgba(255,255,255,.05)');
+          item.addEventListener('mouseleave', () => item.style.background = '');
+          item.addEventListener('click', () => {
+            input.value = affix.name;
+            if (tierSelect) {
+              const maxT = Math.min(affix.maxTier, 7);
+              tierSelect.value = maxT > 5 ? '5' : String(maxT);
+            }
+            dropdown.style.display = 'none';
+          });
+          dropdown.appendChild(item);
+        });
+      }
+      dropdown.style.display = 'block';
+    }
+
+    input.addEventListener('focus', showDropdown);
+    input.addEventListener('input', showDropdown);
+    input.addEventListener('blur', () => setTimeout(() => dropdown.style.display = 'none', 200));
+
+    // × button clears input
+    const removeBtn = slot.querySelector('.affix-remove');
+    if (removeBtn) {
+      removeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        input.value = '';
+        const tierSelect = slot.querySelector('.tier-select');
+        if (tierSelect) tierSelect.value = '1';
+        dropdown.style.display = 'none';
+        input.focus();
+      });
+    }
+  });
+}
+initAffixDropdowns();
+
+// ===== Base selector (keep existing for compatibility) =====
+document.querySelectorAll('.base-selector').forEach(selector => {
+  selector.querySelectorAll('.base-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      selector.querySelectorAll('.base-option').forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+    });
+  });
+});
+
+// FP bar
+document.getElementById('currentFP').addEventListener('input', function() {
+  document.getElementById('fpBar').style.width = Math.min(100, (this.value / 50) * 100) + '%';
+});
+
+// Add affix
+// ===== Affix Dropdown Logic =====
+function getAffixCategory(side) {
+  const data = side === 'current' ? state.current : state.target;
+  return data.category || null;
+}
+
+function getAvailableAffixes(side, type) {
+  const cat = getAffixCategory(side);
+  if (!cat || !AFFIX_DATA[cat]) return [];
+  return AFFIX_DATA[cat][type] || [];
+}
+
+function createAffixSlot(type = 'prefix', side = 'current') {
+  const div = document.createElement('div');
+  div.className = 'affix-slot';
+  const typeLabel = type === 'prefix' ? '前缀' : '后缀';
+  div.innerHTML = `
+    <span class="affix-type ${type}">${typeLabel}</span>
+    <div class="affix-dropdown-wrap" style="position:relative;">
+      <input type="text" class="affix-name-input" placeholder="点击选择或输入词缀…" data-type="${type}" data-side="${side}" autocomplete="off">
+      <div class="affix-dropdown" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:50; background:var(--bg-dark); border:1px solid var(--border); border-radius:6px; max-height:200px; overflow-y:auto; margin-top:2px;"></div>
+    </div>
+    <select class="tier-select">
+      <option value="1">T1</option><option value="2">T2</option><option value="3">T3</option>
+      <option value="4">T4</option><option value="5" selected>T5</option>
+      <option value="6">T6★</option><option value="7">T7★</option>
+    </select>
+    <button class="affix-remove">×</button>
+  `;
+  const input = div.querySelector('.affix-name-input');
+  const dropdown = div.querySelector('.affix-dropdown');
+  const tierSelect = div.querySelector('.tier-select');
+
+  function showDropdown() {
+    const affixes = getAvailableAffixes(side, type);
+    const filter = input.value.trim().toLowerCase();
+    const filtered = filter ? affixes.filter(a => a.name.toLowerCase().includes(filter)) : affixes;
+    if (filtered.length === 0) {
+      if (!getAffixCategory(side)) {
+        dropdown.innerHTML = '<div style="padding:10px; color:var(--text-muted); font-size:12px;">请先选择装备基底</div>';
+      } else {
+        dropdown.innerHTML = '<div style="padding:10px; color:var(--text-muted); font-size:12px;">无匹配词缀</div>';
+      }
+    } else {
+      dropdown.innerHTML = '';
+      filtered.forEach(affix => {
+        const item = document.createElement('div');
+        item.style.cssText = 'padding:6px 10px; cursor:pointer; font-size:12px; display:flex; justify-content:space-between; color:var(--text-primary);';
+        item.innerHTML = `<span>${affix.name}</span><span style="color:var(--text-muted); font-size:11px;">T1-T${affix.maxTier}</span>`;
+        item.addEventListener('mouseenter', () => item.style.background = 'rgba(255,255,255,.05)');
+        item.addEventListener('mouseleave', () => item.style.background = '');
+        item.addEventListener('click', () => {
+          input.value = affix.name;
+          // Auto-set max tier
+          const maxT = Math.min(affix.maxTier, 7);
+          tierSelect.value = maxT > 5 ? '5' : String(maxT);
+          dropdown.style.display = 'none';
+        });
+        dropdown.appendChild(item);
+      });
+    }
+    dropdown.style.display = 'block';
+  }
+
+  input.addEventListener('focus', showDropdown);
+  input.addEventListener('input', showDropdown);
+  input.addEventListener('blur', () => setTimeout(() => dropdown.style.display = 'none', 200));
+
+  div.querySelector('.affix-remove').addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    input.value = '';
+    tierSelect.value = '1';
+    dropdown.style.display = 'none';
+    input.focus();
+  });
+  return div;
+}
+
+document.getElementById('addCurrentAffix').addEventListener('click', () => {
+  const list = document.getElementById('currentAffixes');
+  const p = list.querySelectorAll('.affix-type.prefix').length;
+  list.appendChild(createAffixSlot(p < 2 ? 'prefix' : 'suffix', 'current'));
+});
+document.getElementById('addTargetAffix').addEventListener('click', () => {
+  const list = document.getElementById('targetAffixes');
+  const p = list.querySelectorAll('.affix-type.prefix').length;
+  list.appendChild(createAffixSlot(p < 2 ? 'prefix' : 'suffix', 'target'));
+});
+document.querySelectorAll('.affix-remove').forEach(b => b.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  const slot = b.closest('.affix-slot');
+  const input = slot.querySelector('.affix-name-input');
+  const tierSelect = slot.querySelector('.tier-select');
+  const dropdown = slot.querySelector('.affix-dropdown');
+  if (input) input.value = '';
+  if (tierSelect) tierSelect.value = '1';
+  if (dropdown) dropdown.style.display = 'none';
+  if (input) input.focus();
+}));
+
+// ===== Crafting Calculation (placeholder) =====
+const CRAFT_DATA = {
+  upgradeSuccessRate: { 1:1.00, 2:0.85, 3:0.65, 4:0.45, 5:0.30, 6:0.15 },
+  fpCostRange: { 1:[1,1], 2:[1,2], 3:[1,3], 4:[2,4], 5:[3,5], 6:[3,5] },
+  glyphOfHopeChance: 0.25,
+};
+
+function getPanelData(panelId) {
+  const panel = document.getElementById(panelId);
+  const affixes = [];
+  panel.querySelectorAll('.affix-slot:not(.sealed-slot) .affix-name-input').forEach((input, idx) => {
+    const name = input.value.trim();
+    const slot = input.closest('.affix-slot');
+    const tier = parseInt(slot.querySelector('.tier-select').value);
+    const type = slot.querySelector('.affix-type').classList.contains('prefix') ? 'prefix' : 'suffix';
+    if (name) affixes.push({ name, tier, type });
+  });
+  // Sealed affix (read-only in calculation - cannot be upgraded/removed)
+  const sealedInput = panel.querySelector('.sealed-slot .affix-name-input');
+  const sealedAffix = sealedInput?.value.trim();
+  let sealed = null;
+  if (sealedAffix) {
+    const sealedSlot = sealedInput.closest('.sealed-slot');
+    const tier = parseInt(sealedSlot.querySelector('.tier-select').value);
+    sealed = { name: sealedAffix, tier, type: 'sealed' };
+  }
+  return { affixes, sealed };
+}
+
+// ===== Despair Glyph Seal Probability =====
+// P(seal) depends on: affix tier (lower = higher chance), item rarity, affix count
+// Approximate rates based on community testing (placeholder - replace with real data)
+const DESPAIR_SEAL_RATE = {
+  1: 0.65,  // T1: ~65% seal chance
+  2: 0.45,  // T2: ~45%
+  3: 0.30,  // T3: ~30%
+  4: 0.15,  // T4: ~15%
+  5: 0.08,  // T5: ~8%
+};
+
+function calculateCrafting() {
+  const current = getPanelData('currentAffixes');
+  current.fp = parseInt(document.getElementById('currentFP').value) || 0;
+  const target = getPanelData('targetAffixes');
+
+  if (!current.affixes.length && !current.sealed) {
+    alert('请至少在当前装备中填写一条词缀'); return;
+  }
+  if (!target.affixes.length && !target.sealed) {
+    alert('请至少在目标装备中填写一条词缀'); return;
+  }
+
+  // Check sealed affix compatibility
+  if (target.sealed && current.sealed && target.sealed.name !== current.sealed.name) {
+    alert('⚠️ 封印词缀无法修改！目标封印词缀与当前封印词缀不同，此目标无法达成。');
+    return;
+  }
+
+  // Determine if we need to seal an affix during crafting
+  // Case 1: Target has a sealed affix that current doesn't → need to seal it
+  // Case 2: Current has 4 affixes but target needs a new one → need to seal an existing one first
+  const currentAffixCount = current.affixes.length + (current.sealed ? 1 : 0);
+  const targetAffixCount = target.affixes.length + (target.sealed ? 1 : 0);
+  const needsSeal = target.sealed && !current.sealed;
+  const needsSealToFreeSlot = !needsSeal && current.affixes.length >= 4 &&
+    target.affixes.length > current.affixes.filter(ca =>
+      target.affixes.some(ta => ta.name === ca.name && ta.type === ca.type)
+    ).length;
+
+  // Find which affix to seal (lowest tier non-target affix)
+  let sealCandidate = null;
+  if (needsSeal && target.sealed) {
+    // Target wants a specific sealed affix
+    sealCandidate = current.affixes.find(ca =>
+      ca.name === target.sealed.name && ca.type !== 'sealed'
+    ) || null;
+  } else if (needsSealToFreeSlot) {
+    // Find lowest-tier affix that's not needed in target
+    const needed = current.affixes.filter(ca =>
+      target.affixes.some(ta => ta.name === ca.name && ta.type === ca.type)
+    );
+    const candidates = current.affixes.filter(ca =>
+      !target.affixes.some(ta => ta.name === ca.name && ta.type === ca.type)
+    );
+    sealCandidate = candidates.sort((a, b) => a.tier - b.tier)[0] || null;
+  }
+
+  const steps = [];
+  let overallProb = 1.0;
+  let totalFpCost = 0;
+
+  // Step: Seal with Despair Glyph if needed
+  if (sealCandidate && needsSeal) {
+    const sealRate = DESPAIR_SEAL_RATE[sealCandidate.tier] || 0.10;
+    overallProb *= sealRate;
+    steps.push({
+      action: `封印 <span class="affix-ref ${sealCandidate.type}">${sealCandidate.type === 'prefix' ? '前缀' : '后缀'}</span> <span class="highlight">${sealCandidate.name}</span> T${sealCandidate.tier}`,
+      materials: [{ type: 'glyph', name: '绝望雕文' }],
+      goal: `封印此词缀以腾出空位（封存率 ${Math.round(sealRate * 100)}%，T越低越容易封存）`,
+      successRate: sealRate,
+      fpCost: 1,
+      isSeal: true,
+    });
+    totalFpCost += 1;
+  }
+
+  // Main upgrade loop
+  const unmatched = [...current.affixes];
+  const toUpgrade = [];
+
+  for (const ta of target.affixes) {
+    const idx = unmatched.findIndex(ca => ca.name === ta.name && ca.type === ta.type);
+    if (idx >= 0) {
+      const ca = unmatched[idx];
+      if (ca.tier < ta.tier) toUpgrade.push({ current: ca, target: ta });
+      unmatched.splice(idx, 1);
+    } else {
+      toUpgrade.push({ current: null, target: ta });
+    }
+  }
+
+  for (const { current: ca, target: ta } of toUpgrade) {
+    const startTier = ca ? ca.tier : 0;
+    for (let t = startTier; t < ta.tier; t++) {
+      const r = CRAFT_DATA.upgradeSuccessRate[t] || 0.5;
+      overallProb *= r;
+      const useHope = t >= 3;
+      const fpCost = Math.ceil((CRAFT_DATA.fpCostRange[t]?.[1] || 3) * (useHope ? (1 - CRAFT_DATA.glyphOfHopeChance) : 1));
+      totalFpCost += fpCost;
+      const action = t === 0
+        ? `添加 <span class="affix-ref ${ta.type}">${ta.type === 'prefix' ? '前缀' : '后缀'}</span> <span class="highlight">${ta.name}</span> → T1`
+        : `升级 <span class="affix-ref ${ta.type}">${ta.type === 'prefix' ? '前缀' : '后缀'}</span> <span class="highlight">${ta.name}</span> T${t} → T${t+1}`;
+      steps.push({
+        action,
+        materials: [
+          { type:'shard', name:`${ta.name}碎片` },
+          ...(useHope ? [{ type:'glyph', name:'希望雕文' }] : []),
+        ],
+        goal: t === 0 ? '添加新词缀' : (useHope ? '提升阶级（希望雕文节省FP）' : '提升词缀阶级'),
+        successRate: r,
+        fpCost,
+      });
+    }
+  }
+
+  // If target has a sealed affix and current doesn't, add seal step at end
+  if (target.sealed && !current.sealed) {
+    const targetSealAffix = target.affixes.find(a => a.name === target.sealed.name);
+    if (targetSealAffix) {
+      const sealRate = DESPAIR_SEAL_RATE[targetSealAffix.tier] || 0.10;
+      overallProb *= sealRate;
+      steps.push({
+        action: `封印 <span class="affix-ref ${targetSealAffix.type}">${targetSealAffix.type === 'prefix' ? '前缀' : '后缀'}</span> <span class="highlight">${targetSealAffix.name}</span> T${targetSealAffix.tier}`,
+        materials: [{ type: 'glyph', name: '绝望雕文' }],
+        goal: `封存此词缀（封存率 ${Math.round(sealRate * 100)}%）`,
+        successRate: sealRate,
+        fpCost: 1,
+        isSeal: true,
+      });
+      totalFpCost += 1;
+    }
+  }
+
+  renderSteps(steps, overallProb, totalFpCost);
+}
+
+function renderSteps(steps, overallProb, totalFpCost) {
+  const panel = document.getElementById('stepsPanel');
+  panel.classList.add('visible');
+  document.getElementById('stepCount').textContent = `共 ${steps.length} 步`;
+  const pct = overallProb * 100;
+  const circle = document.getElementById('rateCircle');
+  circle.textContent = pct.toFixed(1) + '%';
+  circle.className = 'rate-circle ' + (pct >= 50 ? 'high' : pct >= 20 ? 'mid' : 'low');
+  document.getElementById('rateValue').textContent = pct.toFixed(2) + '%';
+  document.getElementById('rateDetail').textContent =
+    `${steps.length} 步 · 预计消耗 ${totalFpCost || steps.reduce((s,st)=>s+st.fpCost,0)} FP`;
+
+  const list = document.getElementById('stepList');
+  list.innerHTML = '';
+  steps.forEach((step, i) => {
+    const card = document.createElement('div');
+    card.className = 'step-card';
+    if (step.isSeal) card.style.borderColor = 'rgba(168,85,247,.25)';
+    const rc = step.successRate >= 0.6 ? 'high' : step.successRate >= 0.3 ? 'mid' : 'low';
+    card.innerHTML = `
+      <div class="step-num" ${step.isSeal ? 'style="color:var(--exalted)"' : ''}>${i+1}</div>
+      <div class="step-content">
+        <div class="step-action">${step.action}</div>
+        <div class="step-materials">${step.materials.map(m => `<span class="material-tag ${m.type}">${m.type==='glyph'?'💎':'🔹'} ${m.name}</span>`).join('')}</div>
+        <div class="step-goal">${step.goal}</div>
+      </div>
+      <div class="step-rate"><div class="rate-val ${rc}">${(step.successRate*100).toFixed(0)}%</div><div class="rate-label">${step.isSeal ? '封存率' : '成功率'}</div></div>
+    `;
+    list.appendChild(card);
+  });
+  panel.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+document.getElementById('calcBtn').addEventListener('click', calculateCrafting);
+document.getElementById('updateBtn').addEventListener('click', calculateCrafting);
+</script>
+</body>
+</html>
