@@ -1,0 +1,43 @@
+{
+  "Debug": {
+    "Enabled": false,
+    "Profiling": false,
+    "ProfileGameTypes": false
+  },
+  "Weaver": {
+    "TreePoints": {
+      "Enabled": false,
+      "Value": 0.0
+    },
+    "FreeRespec": false
+  },
+  "Cheats": {
+    "TwoHandeWithShield": false
+  },
+  "ScenesDifficulty": {
+    "EnemyHealthMult": {
+      "Enabled": false,
+      "Value": 1.0
+    },
+    "EnemyDamageMult": {
+      "Enabled": false,
+      "Value": 1.0
+    },
+    "EnemySpeedMult": {
+      "Enabled": false,
+      "Value": 1.0
+    },
+    "ScaleZoneToPlayer": false,
+    "CapLevelToZone": false,
+    "ForceMonsterRarity": {
+      "Off": true,
+      "Magic": false,
+      "Rare": false
+    }
+  },
+  "SkillsAutoCast": {
+    "ModifierKey": "kb:LeftControl",
+    "PauseOnZoneChange": false,
+    "DisableInNonCombatZone": false
+  }
+}
